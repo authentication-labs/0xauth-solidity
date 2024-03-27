@@ -25,7 +25,7 @@ describe('Identity', () => {
 					await expect(tx).to.emit(aliceIdentity, 'Executed');
 					const newBalance = await ethers.provider.getBalance(carolWallet.address);
 
-					expect(newBalance).to.equal(previousBalance.add(action.value));
+					expect(newBalance).to.equal(previousBalance + BigInt(action.value));
 				});
 			});
 
@@ -38,7 +38,7 @@ describe('Identity', () => {
 					);
 
 					const action = {
-						to: aliceIdentity.address,
+						to: await aliceIdentity.getAddress(),
 						value: 0,
 						data: new ethers.Interface([
 							'function addKey(bytes32 key, uint256 purpose, uint256 keyType) returns (bool success)',
@@ -60,7 +60,7 @@ describe('Identity', () => {
 
 					const previousBalance = await ethers.provider.getBalance(carolWallet.address);
 					const action = {
-						to: aliceIdentity.address,
+						to: await aliceIdentity.getAddress(),
 						value: 0,
 						data: new ethers.Interface([
 							'function addKey(bytes32 key, uint256 purpose, uint256 keyType) returns (bool success)',
@@ -78,7 +78,7 @@ describe('Identity', () => {
 					await expect(tx).to.emit(aliceIdentity, 'ExecutionFailed');
 					const newBalance = await ethers.provider.getBalance(carolWallet.address);
 
-					expect(newBalance).to.equal(previousBalance.add(action.value));
+					expect(newBalance).to.equal(previousBalance + BigInt(action.value));
 				});
 			});
 		});
@@ -99,7 +99,7 @@ describe('Identity', () => {
 					await aliceIdentity.connect(aliceWallet).addKey(carolKeyHash, 2, 1);
 
 					const action = {
-						to: aliceIdentity.address,
+						to: await aliceIdentity.getAddress(),
 						value: 0,
 						data: new ethers.Interface([
 							'function addKey(bytes32 key, uint256 purpose, uint256 keyType) returns (bool success)',
@@ -129,21 +129,21 @@ describe('Identity', () => {
 					);
 
 					const action = {
-						to: bobIdentity.address,
+						to: await bobIdentity.getAddress(),
 						value: 10,
 						data: new ethers.Interface([
 							'function addKey(bytes32 key, uint256 purpose, uint256 keyType) returns (bool success)',
 						]).encodeFunctionData('addKey', [aliceKeyHash, 3, 1]),
 					};
 
-					const previousBalance = await ethers.provider.getBalance(bobIdentity.address);
+					const previousBalance = await ethers.provider.getBalance(await bobIdentity.getAddress());
 
 					const tx = await aliceIdentity
 						.connect(carolWallet)
 						.execute(action.to, action.value, action.data, { value: action.value });
 					await expect(tx).to.emit(aliceIdentity, 'Approved');
 					await expect(tx).to.emit(aliceIdentity, 'ExecutionFailed');
-					const newBalance = await ethers.provider.getBalance(bobIdentity.address);
+					const newBalance = await ethers.provider.getBalance(await bobIdentity.getAddress());
 
 					expect(newBalance).to.equal(previousBalance);
 				});
@@ -172,7 +172,7 @@ describe('Identity', () => {
 					await expect(tx).to.emit(aliceIdentity, 'Executed');
 					const newBalance = await ethers.provider.getBalance(davidWallet.address);
 
-					expect(newBalance).to.equal(previousBalance.add(action.value));
+					expect(newBalance).to.equal(previousBalance + BigInt(action.value));
 				});
 			});
 		});
@@ -238,7 +238,7 @@ describe('Identity', () => {
 			it('should revert for not authorized', async () => {
 				const { aliceIdentity, davidWallet, bobWallet } = await loadFixture(deployIdentityFixture);
 
-				await aliceIdentity.connect(bobWallet).execute(aliceIdentity.address, 10, '0x', { value: 10 });
+				await aliceIdentity.connect(bobWallet).execute(await aliceIdentity.getAddress(), 10, '0x', { value: 10 });
 
 				await expect(aliceIdentity.connect(davidWallet).approve(0, true)).to.be.revertedWith(
 					'Sender does not have management key'
@@ -258,7 +258,7 @@ describe('Identity', () => {
 				await expect(tx).to.emit(aliceIdentity, 'Executed');
 				const newBalance = await ethers.provider.getBalance(carolWallet.address);
 
-				expect(newBalance).to.equal(previousBalance.add(10));
+				expect(newBalance).to.equal(previousBalance + BigInt(10));
 			});
 
 			it('should leave approve to false', async () => {

@@ -20,12 +20,12 @@ describe('VerifierUser', () => {
 			const verifierUser = await ethers.deployContract('VerifierUser', []);
 
 			await verifierUser.addClaimTopic(666);
-			await verifierUser.addTrustedIssuer(claimIssuer.address, [666]);
+			await verifierUser.addTrustedIssuer(await claimIssuer.getAddress(), [666]);
 
 			const aliceClaim666 = {
 				id: '',
-				identity: aliceIdentity.address,
-				issuer: claimIssuer.address,
+				identity: await aliceIdentity.getAddress(),
+				issuer: await claimIssuer.getAddress(),
 				topic: 666,
 				scheme: 1,
 				data: '0x0042',
@@ -54,7 +54,7 @@ describe('VerifierUser', () => {
 				);
 
 			const action = {
-				to: verifierUser.address,
+				to: await verifierUser.getAddress(),
 				value: 0,
 				data: new ethers.Interface(['function doSomething()']).encodeFunctionData('doSomething'),
 			};
@@ -72,12 +72,12 @@ describe('VerifierUser', () => {
 			const verifierUser = await ethers.deployContract('VerifierUser', []);
 
 			await verifierUser.addClaimTopic(666);
-			await verifierUser.addTrustedIssuer(claimIssuer.address, [666]);
+			await verifierUser.addTrustedIssuer(await claimIssuer.getAddress(), [666]);
 
 			const aliceClaim666 = {
 				id: '',
-				identity: aliceIdentity.address,
-				issuer: claimIssuer.address,
+				identity: await aliceIdentity.getAddress(),
+				issuer: await claimIssuer.getAddress(),
 				topic: 666,
 				scheme: 1,
 				data: '0x0042',
@@ -108,7 +108,7 @@ describe('VerifierUser', () => {
 			await claimIssuer.connect(claimIssuerWallet).revokeClaimBySignature(aliceClaim666.signature);
 
 			const action = {
-				to: verifierUser.address,
+				to: await verifierUser.getAddress(),
 				value: 0,
 				data: new ethers.Interface(['function doSomething()']).encodeFunctionData('doSomething'),
 			};

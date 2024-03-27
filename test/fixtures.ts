@@ -7,14 +7,19 @@ export async function deployFactoryFixture() {
 	const Identity = await ethers.getContractFactory('Identity');
 	const identityImplementation = await Identity.connect(deployerWallet).deploy(deployerWallet.address, true);
 
+	await identityImplementation.waitForDeployment()
+
 	const ImplementationAuthority = await ethers.getContractFactory('ImplementationAuthority');
 	const implementationAuthority = await ImplementationAuthority.connect(deployerWallet).deploy(
-		identityImplementation.address
+		await identityImplementation.getAddress()
 	);
 
-	const IdentityFactory = await ethers.getContractFactory('IdFactory');
-	const identityFactory = await IdentityFactory.connect(deployerWallet).deploy(implementationAuthority.address);
+	await implementationAuthority.waitForDeployment();
 
+
+	const IdentityFactory = await ethers.getContractFactory('IdFactory');
+	const identityFactory = await IdentityFactory.connect(deployerWallet).deploy(await implementationAuthority.getAddress())
+	await identityFactory.waitForDeployment();
 	return {
 		identityFactory,
 		identityImplementation,
@@ -55,10 +60,12 @@ export async function deployIdentityFixture() {
 	await aliceIdentity
 		.connect(aliceWallet)
 		.addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [davidWallet.address])), 2, 1);
+
+
 	const aliceClaim666 = {
 		id: '',
-		identity: aliceIdentity.address,
-		issuer: claimIssuer.address,
+		identity: await aliceIdentity.getAddress(),
+		issuer: await claimIssuer.getAddress(),
 		topic: 666,
 		scheme: 1,
 		data: '0x0042',

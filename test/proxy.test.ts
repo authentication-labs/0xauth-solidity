@@ -18,11 +18,13 @@ describe('Proxy', () => {
 
 		const claimIssuer = await ethers.deployContract('Test');
 
-		const authority = await ethers.deployContract('ImplementationAuthority', [claimIssuer.address]);
+		claimIssuer.waitForDeployment();
+
+		const authority = await ethers.deployContract('ImplementationAuthority', [await claimIssuer.getAddress()]);
 
 		const IdentityProxy = await ethers.getContractFactory('IdentityProxy');
 		await expect(
-			IdentityProxy.connect(deployerWallet).deploy(authority.address, identityOwnerWallet.address)
+			IdentityProxy.connect(deployerWallet).deploy(await authority.getAddress(), identityOwnerWallet.address)
 		).to.be.revertedWith('Initialization failed.');
 	});
 
@@ -31,12 +33,12 @@ describe('Proxy', () => {
 
 		const implementation = await ethers.deployContract('Identity', [deployerWallet.address, true]);
 		const implementationAuthority = await ethers.deployContract('ImplementationAuthority', [
-			implementation.address,
+			await implementation.getAddress(),
 		]);
 
 		const IdentityProxy = await ethers.getContractFactory('IdentityProxy');
 		await expect(
-			IdentityProxy.connect(deployerWallet).deploy(implementationAuthority.address, ethers.ZeroAddress)
+			IdentityProxy.connect(deployerWallet).deploy(await implementationAuthority.getAddress(), ethers.ZeroAddress)
 		).to.be.revertedWith('invalid argument - zero address');
 	});
 
@@ -70,14 +72,14 @@ describe('Proxy', () => {
 
 		const implementation = await ethers.deployContract('Identity', [deployerWallet.address, true]);
 		const implementationAuthority = await ethers.deployContract('ImplementationAuthority', [
-			implementation.address,
+			await implementation.getAddress(),
 		]);
 
 		const newImplementation = await ethers.deployContract('Identity', [deployerWallet.address, true]);
 
 		const tx = await implementationAuthority
 			.connect(deployerWallet)
-			.updateImplementation(newImplementation.address);
-		await expect(tx).to.emit(implementationAuthority, 'UpdatedImplementation').withArgs(newImplementation.address);
+			.updateImplementation(await newImplementation.getAddress());
+		await expect(tx).to.emit(implementationAuthority, 'UpdatedImplementation').withArgs(await newImplementation.getAddress());
 	});
 });

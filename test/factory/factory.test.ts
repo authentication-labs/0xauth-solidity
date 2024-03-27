@@ -1,8 +1,12 @@
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 import { deployIdentityFixture } from '../fixtures';
+
+chai.use(chaiAsPromised);
 
 describe('IdFactory', () => {
 	it('should revert because authority is Zero address', async () => {
@@ -98,9 +102,9 @@ describe('IdFactory', () => {
 				const tx = await identityFactory.connect(aliceWallet).linkWallet(davidWallet.address);
 				await expect(tx)
 					.to.emit(identityFactory, 'WalletLinked')
-					.withArgs(davidWallet.address, aliceIdentity.address);
+					.withArgs(davidWallet.address, await aliceIdentity.getAddress());
 
-				expect(await identityFactory.getWallets(aliceIdentity.address)).to.deep.equal([
+				expect(await identityFactory.getWallets(await aliceIdentity.getAddress())).to.deep.equal([
 					aliceWallet.address,
 					davidWallet.address,
 				]);
@@ -141,9 +145,9 @@ describe('IdFactory', () => {
 				const tx = await identityFactory.connect(aliceWallet).unlinkWallet(davidWallet.address);
 				await expect(tx)
 					.to.emit(identityFactory, 'WalletUnlinked')
-					.withArgs(davidWallet.address, aliceIdentity.address);
+					.withArgs(davidWallet.address, await aliceIdentity.getAddress());
 
-				expect(await identityFactory.getWallets(aliceIdentity.address)).to.deep.equal([aliceWallet.address]);
+				expect(await identityFactory.getWallets(await aliceIdentity.getAddress())).to.deep.equal([aliceWallet.address]);
 			});
 		});
 	});
@@ -211,7 +215,7 @@ describe('IdFactory', () => {
 					);
 				await expect(
 					identity.keyHasPurpose(
-						ethers.AbiCoder.defaultAbiCoder().encode(['address'], [identityFactory.address]),
+						ethers.AbiCoder.defaultAbiCoder().encode(['address'], [await identityFactory.getAddress()]),
 						1
 					)
 				).to.eventually.be.false;

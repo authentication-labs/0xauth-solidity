@@ -13,8 +13,8 @@ describe('Identity', () => {
 						const { aliceIdentity, aliceWallet } = await loadFixture(deployIdentityFixture);
 
 						const claim = {
-							identity: aliceIdentity.address,
-							issuer: aliceIdentity.address,
+							identity: await aliceIdentity.getAddress(),
+							issuer: await aliceIdentity.getAddress(),
 							topic: 42,
 							scheme: 1,
 							data: '0x0042',
@@ -63,8 +63,8 @@ describe('Identity', () => {
 						const { aliceIdentity, aliceWallet } = await loadFixture(deployIdentityFixture);
 
 						claim = {
-							identity: aliceIdentity.address,
-							issuer: aliceIdentity.address,
+							identity: await aliceIdentity.getAddress(),
+							issuer: await aliceIdentity.getAddress(),
 							topic: 42,
 							scheme: 1,
 							data: '0x0042',
@@ -88,7 +88,7 @@ describe('Identity', () => {
 							const { aliceIdentity, aliceWallet, bobWallet } = await loadFixture(deployIdentityFixture);
 
 							const action = {
-								to: aliceIdentity.address,
+								to: await aliceIdentity.getAddress(),
 								value: 0,
 								data: new ethers.Interface([
 									'function addClaim(uint256 topic, uint256 scheme, address issuer, bytes calldata signature, bytes calldata data, string calldata uri) external returns (bytes32 claimRequestId)',
@@ -192,8 +192,8 @@ describe('Identity', () => {
 						);
 
 						const claim = {
-							identity: aliceIdentity.address,
-							issuer: claimIssuer.address,
+							identity: await aliceIdentity.getAddress(),
+							issuer: await claimIssuer.getAddress(),
 							topic: 42,
 							scheme: 1,
 							data: '0x0042',
@@ -234,8 +234,8 @@ describe('Identity', () => {
 						);
 
 						claim = {
-							identity: aliceIdentity.address,
-							issuer: claimIssuer.address,
+							identity: await aliceIdentity.getAddress(),
+							issuer: await claimIssuer.getAddress(),
 							topic: 42,
 							scheme: 1,
 							data: '0x0042',
@@ -259,7 +259,7 @@ describe('Identity', () => {
 							const { aliceIdentity, aliceWallet, bobWallet } = await loadFixture(deployIdentityFixture);
 
 							const action = {
-								to: aliceIdentity.address,
+								to: await aliceIdentity.getAddress(),
 								value: 0,
 								data: new ethers.Interface([
 									'function addClaim(uint256 topic, uint256 scheme, address issuer, bytes calldata signature, bytes calldata data, string calldata uri) external returns (bytes32 claimRequestId)',
@@ -355,10 +355,11 @@ describe('Identity', () => {
 
 		describe('updateClaim (addClaim)', () => {
 			describe('when there is already a claim from this issuer and this topic', () => {
-				let aliceIdentity: ethers.Contract;
-				let aliceWallet: ethers.Wallet;
-				let claimIssuer: ethers.Contract;
-				let claimIssuerWallet: ethers.Wallet;
+
+				let aliceIdentity: any;
+				let aliceWallet: any;
+				let claimIssuer: any;
+				let claimIssuerWallet: any;
 				before(async () => {
 					const params = await loadFixture(deployIdentityFixture);
 					aliceIdentity = params.aliceIdentity;
@@ -367,8 +368,8 @@ describe('Identity', () => {
 					claimIssuerWallet = params.claimIssuerWallet;
 
 					const claim = {
-						identity: aliceIdentity.address,
-						issuer: claimIssuer.address,
+						identity: await aliceIdentity.getAddress(),
+						issuer: await claimIssuer.getAddress(),
 						topic: 42,
 						scheme: 1,
 						data: '0x0042',
@@ -393,8 +394,8 @@ describe('Identity', () => {
 
 				it('should replace the existing claim', async () => {
 					const claim = {
-						identity: aliceIdentity.address,
-						issuer: claimIssuer.address,
+						identity: await aliceIdentity.getAddress(),
+						issuer: await claimIssuer.getAddress(),
 						topic: 42,
 						scheme: 1,
 						data: '0x004200101010',
@@ -439,8 +440,8 @@ describe('Identity', () => {
 						deployIdentityFixture
 					);
 					const claim = {
-						identity: aliceIdentity.address,
-						issuer: claimIssuer.address,
+						identity: await aliceIdentity.getAddress(),
+						issuer: await claimIssuer.getAddress(),
 						topic: 42,
 						scheme: 1,
 						data: '0x0042',
@@ -466,7 +467,7 @@ describe('Identity', () => {
 						.addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
 
 					const action = {
-						to: aliceIdentity.address,
+						to: await aliceIdentity.getAddress(),
 						value: 0,
 						data: new ethers.Interface([
 							'function removeClaim(bytes32 claimId) external returns (bool success)',
@@ -494,7 +495,7 @@ describe('Identity', () => {
 					const { aliceIdentity, bobWallet, claimIssuer } = await loadFixture(deployIdentityFixture);
 
 					const claimId = ethers.keccak256(
-						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [claimIssuer.address, 42])
+						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [await claimIssuer.getAddress(), 42])
 					);
 
 					await expect(aliceIdentity.connect(bobWallet).removeClaim(claimId)).to.be.revertedWith(
@@ -508,7 +509,7 @@ describe('Identity', () => {
 					const { aliceIdentity, carolWallet, claimIssuer } = await loadFixture(deployIdentityFixture);
 
 					const claimId = ethers.keccak256(
-						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [claimIssuer.address, 42])
+						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [await claimIssuer.getAddress(), 42])
 					);
 
 					await expect(aliceIdentity.connect(carolWallet).removeClaim(claimId)).to.be.revertedWith(
@@ -523,8 +524,8 @@ describe('Identity', () => {
 						deployIdentityFixture
 					);
 					const claim = {
-						identity: aliceIdentity.address,
-						issuer: claimIssuer.address,
+						identity: await aliceIdentity.getAddress(),
+						issuer: await claimIssuer.getAddress(),
 						topic: 42,
 						scheme: 1,
 						data: '0x0042',
@@ -570,7 +571,7 @@ describe('Identity', () => {
 				it('should return an empty struct', async () => {
 					const { aliceIdentity, claimIssuer } = await loadFixture(deployIdentityFixture);
 					const claimId = ethers.keccak256(
-						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [claimIssuer.address, 42])
+						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [await claimIssuer.getAddress(), 42])
 					);
 					const found = await aliceIdentity.getClaim(claimId);
 					expect(found.issuer).to.equal(ethers.ZeroAddress);
