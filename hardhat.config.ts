@@ -28,8 +28,13 @@ const config: HardhatUserConfig = {
 		],
 	},
 	namedAccounts: {
-		deployer: 0,
-		identityOwner: 1,
+		deployerWallet: 0,
+		claimIssuerWallet: 1,
+		aliceWallet: 2,
+		bobWallet: 3,
+		carolWallet: 4,
+		davidWallet: 5,
+		tokenOwnerWallet: 6,
 	},
 	networks: addForkConfiguration({
 		hardhat: {

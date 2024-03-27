@@ -1,15 +1,15 @@
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-	const {deployments, getNamedAccounts} = hre;
-	const {deploy} = deployments;
+	const { deployments, getNamedAccounts } = hre;
+	const { deploy } = deployments;
 
-	const {deployer, identityOwner} = await getNamedAccounts();
+	const { deployerWallet, claimIssuerWallet } = await getNamedAccounts();
 
 	await deploy('ClaimIssuer', {
-		from: deployer,
-		args: [identityOwner],
+		from: deployerWallet,
+		args: [claimIssuerWallet],
 		log: true,
 		autoMine: true,
 	});

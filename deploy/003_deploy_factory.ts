@@ -1,26 +1,26 @@
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 
 const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-	const {deployments, getNamedAccounts} = hre;
-	const {deploy} = deployments;
+	const { deployments, getNamedAccounts } = hre;
+	const { deploy } = deployments;
 
-	const {deployer} = await getNamedAccounts();
+	const { deployerWallet } = await getNamedAccounts();
 
 	const identityImplementation = await deploy('Identity', {
-		from: deployer,
-		args: [deployer, true],
+		from: deployerWallet,
+		args: [deployerWallet, true],
 		log: true,
 	});
 
 	const implementationAuthority = await deploy('ImplementationAuthority', {
-		from: deployer,
+		from: deployerWallet,
 		args: [identityImplementation.address],
 		log: true,
 	});
 
 	const factory = await deploy('IdFactory', {
-		from: deployer,
+		from: deployerWallet,
 		args: [implementationAuthority.address],
 		log: true,
 	});

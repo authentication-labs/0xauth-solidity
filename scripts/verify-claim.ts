@@ -39,7 +39,7 @@ async function main() {
     const provider = ethers.getDefaultProvider('https://rpc-mumbai.maticvigil.com/v1/9cd3d6ce21f0a25bb8f33504a1820d616f700d24');
     const tx = await provider.getTransaction(TX_ID);
     const abi = await getIdentityABI();
-    const contract = new ethers.utils.Interface(abi)
+    const contract = new ethers.Interface(abi)
     const data = contract.parseTransaction({ data: tx.data, value: tx.value });
 
     const claim = {
