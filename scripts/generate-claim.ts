@@ -16,7 +16,7 @@ async function main() {
     console.log(`Digest: ${digest}`);
 
 
-    const signature = await IssuerAddress.signMessage(ethers.utils.arrayify(digest));
+    const signature = await IssuerAddress.signMessage(ethers.utils.getBytes(digest));
     console.log(`Signature: ${signature}`);
 
     const issuedClaim = {

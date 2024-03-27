@@ -125,7 +125,7 @@ describe('ClaimIssuer - Reference (with revoke)', () => {
 			expect(
 				await claimIssuer.getRecoveredAddress(
 					aliceClaim666.signature + '00',
-					ethers.arrayify(
+					ethers.getBytes(
 						ethers.keccak256(
 							ethers.AbiCoder.defaultAbiCoder().encode(
 								['address', 'uint256', 'bytes'],

@@ -33,7 +33,7 @@ describe('VerifierUser', () => {
 				uri: 'https://example.com',
 			};
 			aliceClaim666.signature = await claimIssuerWallet.signMessage(
-				ethers.arrayify(
+				ethers.getBytes(
 					ethers.keccak256(
 						ethers.AbiCoder.defaultAbiCoder().encode(
 							['address', 'uint256', 'bytes'],
@@ -85,7 +85,7 @@ describe('VerifierUser', () => {
 				uri: 'https://example.com',
 			};
 			aliceClaim666.signature = await claimIssuerWallet.signMessage(
-				ethers.arrayify(
+				ethers.getBytes(
 					ethers.keccak256(
 						ethers.AbiCoder.defaultAbiCoder().encode(
 							['address', 'uint256', 'bytes'],

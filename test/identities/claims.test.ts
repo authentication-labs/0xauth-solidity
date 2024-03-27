@@ -22,7 +22,7 @@ describe('Identity', () => {
 							uri: 'https://example.com',
 						};
 						claim.signature = await aliceWallet.signMessage(
-							ethers.arrayify(
+							ethers.getBytes(
 								ethers.keccak256(
 									ethers.AbiCoder.defaultAbiCoder().encode(
 										['address', 'uint256', 'bytes'],
@@ -72,7 +72,7 @@ describe('Identity', () => {
 							uri: 'https://example.com',
 						};
 						claim.signature = await aliceWallet.signMessage(
-							ethers.arrayify(
+							ethers.getBytes(
 								ethers.keccak256(
 									ethers.AbiCoder.defaultAbiCoder().encode(
 										['address', 'uint256', 'bytes'],
@@ -201,7 +201,7 @@ describe('Identity', () => {
 							uri: 'https://example.com',
 						};
 						claim.signature = await claimIssuerWallet.signMessage(
-							ethers.arrayify(
+							ethers.getBytes(
 								ethers.keccak256(
 									ethers.AbiCoder.defaultAbiCoder().encode(
 										['address', 'uint256', 'bytes'],
@@ -243,7 +243,7 @@ describe('Identity', () => {
 							uri: 'https://example.com',
 						};
 						claim.signature = await claimIssuerWallet.signMessage(
-							ethers.arrayify(
+							ethers.getBytes(
 								ethers.keccak256(
 									ethers.AbiCoder.defaultAbiCoder().encode(
 										['address', 'uint256', 'bytes'],
@@ -376,7 +376,7 @@ describe('Identity', () => {
 						uri: 'https://example.com',
 					};
 					claim.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -402,7 +402,7 @@ describe('Identity', () => {
 						uri: 'https://example.com',
 					};
 					claim.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -451,7 +451,7 @@ describe('Identity', () => {
 						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [claim.issuer, claim.topic])
 					);
 					claim.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -535,7 +535,7 @@ describe('Identity', () => {
 						ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [claim.issuer, claim.topic])
 					);
 					claim.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],

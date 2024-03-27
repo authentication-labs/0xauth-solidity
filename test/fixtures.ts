@@ -69,7 +69,7 @@ export async function deployIdentityFixture() {
 		ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [aliceClaim666.issuer, aliceClaim666.topic])
 	);
 	aliceClaim666.signature = await claimIssuerWallet.signMessage(
-		ethers.arrayify(
+		ethers.getBytes(
 			ethers.keccak256(
 				ethers.AbiCoder.defaultAbiCoder().encode(
 					['address', 'uint256', 'bytes'],

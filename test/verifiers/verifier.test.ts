@@ -72,7 +72,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com',
 					};
 					aliceClaim666.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -118,7 +118,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com',
 					};
 					aliceClaim666.signature = await claimIssuerWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -170,7 +170,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com',
 					};
 					aliceClaim666C.signature = await claimIssuerCWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -201,7 +201,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com',
 					};
 					aliceClaim666.signature = await claimIssuerAWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -232,7 +232,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com/B/666',
 					};
 					aliceClaim666B.signature = await claimIssuerBWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -263,7 +263,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com/42',
 					};
 					aliceClaim42.signature = await claimIssuerBWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -313,7 +313,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com',
 					};
 					aliceClaim666.signature = await claimIssuerAWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -344,7 +344,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com/B/666',
 					};
 					aliceClaim666B.signature = await claimIssuerBWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
@@ -375,7 +375,7 @@ describe('Verifier', () => {
 						uri: 'https://example.com/42',
 					};
 					aliceClaim42.signature = await claimIssuerBWallet.signMessage(
-						ethers.arrayify(
+						ethers.getBytes(
 							ethers.keccak256(
 								ethers.AbiCoder.defaultAbiCoder().encode(
 									['address', 'uint256', 'bytes'],
