@@ -5,14 +5,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
 
-    const { deployerWallet, claimIssuerWallet } = await getNamedAccounts();
+    const { deployerWallet, aliceWallet } = await getNamedAccounts();
 
-    await deploy('ClaimIssuer', {
+    await deploy('Identity', {
         from: deployerWallet,
-        args: [claimIssuerWallet],
+        args: [aliceWallet, false],
         log: true,
         autoMine: true,
     });
 };
 export default func;
-func.tags = ['ClaimIssuer'];
+func.tags = ['Identity'];
