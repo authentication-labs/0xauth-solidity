@@ -56,9 +56,9 @@ const config: HardhatUserConfig = {
 			url: node_url('mainnet'),
 			accounts: accounts('mainnet'),
 		},
-		mumbai: {
-			url: node_url('mumbai'),
-			accounts: accounts('mumbai'),
+		amoy: {
+			url: node_url('amoy'),
+			accounts: accounts('amoy'),
 		},
 		sepolia: {
 			url: node_url('sepolia'),

@@ -1,4 +1,4 @@
-cache/
+cache
 artifacts/
 
 coverage*
@@ -19,3 +19,5 @@ deployments/hardhat
 deployments/localhost
 
 /.dapp
+
+main.js
