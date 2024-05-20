@@ -12,6 +12,7 @@
     "@types/chai-as-promised": "^7.1.8",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.3.1",
+    "@types/qs": "^6.9.15",
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
     "cross-env": "^7.0.2",
@@ -55,6 +56,8 @@
     "tenderly:push": "node ./_scripts.js tenderly:push"
   },
   "dependencies": {
-    "bignumber.js": "^9.1.2"
+    "axios": "^1.7.0",
+    "bignumber.js": "^9.1.2",
+    "qs": "^6.12.1"
   }
 }

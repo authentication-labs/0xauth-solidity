@@ -5,16 +5,16 @@ import { IdFactory, ClaimIssuer, Identity } from "../typechain-types";
 async function main() {
     const { claimIssuerWallet, aliceWallet } = await ethers.getNamedSigners();
 
-    const claimIssuerJSON = JSON.parse(fs.readFileSync('deployments/mumbai/ClaimIssuer.json', 'utf8'));
+    const claimIssuerJSON = JSON.parse(fs.readFileSync('deployments/amoy/ClaimIssuer.json', 'utf8'));
     const claimIssuer = await ethers.getContractAt(claimIssuerJSON.abi, claimIssuerJSON.address) as unknown as ClaimIssuer;
     console.log("ClaimIssuer Address:", await claimIssuer.getAddress());
 
-    const IdFactoryJSON = JSON.parse(fs.readFileSync('deployments/mumbai/IdFactory.json', 'utf8'));
+    const IdFactoryJSON = JSON.parse(fs.readFileSync('deployments/amoy/IdFactory.json', 'utf8'));
     const idFactory = await ethers.getContractAt(IdFactoryJSON.abi, IdFactoryJSON.address) as IdFactory;
     console.log("Identity Factory:", await idFactory.getAddress());
 
     const aliceIdentityAddress = await idFactory.getIdentity(aliceWallet.address);
-    const identityJSON = JSON.parse(fs.readFileSync('deployments/mumbai/Identity.json', 'utf8'));
+    const identityJSON = JSON.parse(fs.readFileSync('deployments/amoy/Identity.json', 'utf8'));
     const aliceIdentity = await ethers.getContractAt(identityJSON.abi, aliceIdentityAddress) as unknown as Identity;
     console.log("Alice Identity Address:", await aliceIdentity.getAddress());
 

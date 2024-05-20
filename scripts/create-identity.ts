@@ -5,7 +5,7 @@ import { IdFactory } from "../typechain-types";
 async function main() {
     const { deployerWallet, aliceWallet } = await ethers.getNamedSigners();
 
-    const IdFactoryAbi = JSON.parse(fs.readFileSync('deployments/mumbai/IdFactory.json', 'utf8'));
+    const IdFactoryAbi = JSON.parse(fs.readFileSync('deployments/amoy/IdFactory.json', 'utf8'));
     const idFactoryAddress = IdFactoryAbi.address;
 
     const idFactory = await ethers.getContractAt(IdFactoryAbi.abi, idFactoryAddress, deployerWallet) as IdFactory;
