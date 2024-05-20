@@ -1,6 +1,7 @@
 import axios from 'axios';
 import qs from 'qs';
 import { ethers } from 'ethers';
+import Identity from '../deployments/amoy/Identity.json';
 import IDFactory from '../deployments/amoy/IdFactory.json';
 import ClaimIssuer from '../deployments/amoy/ClaimIssuer.json';
 import ImplementationAuthority from '../deployments/amoy/ImplementationAuthority.json';
@@ -32,7 +33,7 @@ function correctMetadata(metadata: any) {
 }
 
 async function verifyContract(contract: any, address: string) {
-    const apiKey = process.env.POLYGONSCAN_API_KEY;
+    const apiKey = process.env.POLYGONSCAN_APIKEY;
     const sourceCode = JSON.parse(contract.metadata);
     const constructorArgs = contract.args || [];
     const abiInterface = new ethers.Interface(contract.abi);
@@ -73,17 +74,19 @@ async function verifyContract(contract: any, address: string) {
 }
 
 async function main() {
+    const identityAddress = Identity.address;
     const factoryAddress = IDFactory.address
     const claimIssuerAddress = ClaimIssuer.address;
     const implementationAuthorityAddress = claimIssuerAddress
 
+    await verifyContract(identityAddress, identityAddress);
     await verifyContract(IDFactory, factoryAddress);
     await verifyContract(ClaimIssuer, claimIssuerAddress);
     await verifyContract(ImplementationAuthority, implementationAuthorityAddress);
 }
 
 async function checkVerificationStatus() {
-    const apiKey = process.env.POLYGONSCAN_API_KEY!;
+    const apiKey = process.env.POLYGONSCAN_APIKEY!;
 
     const params = {
         apikey: apiKey,
