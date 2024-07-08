@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
@@ -7,16 +7,12 @@ import {IIdentity} from "../interface/IIdentity.sol";
 
 contract CrossChainBridge {
     address immutable i_router;
-    address immutable i_link;
-    address public targetContract;
 
     event MessageSent(bytes32 messageId);
     event MessageReceived(bytes32 messageId, uint64 sourceChainSelector, address sender, string action);
 
-    constructor(address router, address link, address _targetContract) {
+    constructor(address router) {
         i_router = router;
-        i_link = link;
-        targetContract = _targetContract;
     }
 
     receive() external payable {}
@@ -73,39 +69,40 @@ contract CrossChainBridge {
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver),
             data: payload,
-            tokenAmounts: new Client.EVMTokenAmount[](0),
+            tokenAmounts: new Client.EVMTokenAmount ,
             extraArgs: "",
-            feeToken: address(0)
+            feeToken: address(0) // Use native token
         });
 
         uint256 fee = IRouterClient(i_router).getFee(destinationChainSelector, message);
 
-        bytes32 messageId;
-
-        messageId = IRouterClient(i_router).ccipSend{value: fee}(destinationChainSelector, message);
+        bytes32 messageId = IRouterClient(i_router).ccipSend{value: fee}(destinationChainSelector, message);
 
         emit MessageSent(messageId);
     }
 
-    function handleCrossChainMessage(string memory action, bytes memory data) external {
+    function handleCrossChainMessage(Client.Any2EVMMessage memory message) external {
         require(msg.sender == i_router, "Only router can call this function");
 
+        (string memory action, bytes memory data) = abi.decode(message.data, (string, bytes));
+        address targetIdentity = abi.decode(message.receiver, (address));
+
         if (keccak256(bytes(action)) == keccak256(bytes("AddClaim"))) {
-            (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory decodeData, string memory uri) = abi.decode(data, (uint256, uint256, address, bytes, bytes, string));
-            IIdentity(targetContract).addClaim(topic, scheme, issuer, signature, decodeData, uri);
+            (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory decodedData, string memory uri) = abi.decode(data, (uint256, uint256, address, bytes, bytes, string));
+            IIdentity(targetIdentity).addClaim(topic, scheme, issuer, signature, decodedData, uri);
         } else if (keccak256(bytes(action)) == keccak256(bytes("RemoveClaim"))) {
             bytes32 claimId = abi.decode(data, (bytes32));
-            IIdentity(targetContract).removeClaim(claimId);
+            IIdentity(targetIdentity).removeClaim(claimId);
         } else if (keccak256(bytes(action)) == keccak256(bytes("AddKey"))) {
             (bytes32 key, uint256 purpose, uint256 keyType) = abi.decode(data, (bytes32, uint256, uint256));
-            IIdentity(targetContract).addKey(key, purpose, keyType);
+            IIdentity(targetIdentity).addKey(key, purpose, keyType);
         } else if (keccak256(bytes(action)) == keccak256(bytes("RemoveKey"))) {
             (bytes32 key, uint256 purpose) = abi.decode(data, (bytes32, uint256));
-            IIdentity(targetContract).removeKey(key, purpose);
+            IIdentity(targetIdentity).removeKey(key, purpose);
         } else {
             revert("Unknown action");
         }
 
-        emit MessageReceived(keccak256(data), 0, msg.sender, action); // 0 and msg.sender are placeholders
+        emit MessageReceived(message.messageId, message.sourceChainSelector, abi.decode(message.sender, (address)), action);
     }
 }
