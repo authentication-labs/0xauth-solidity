@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 
 const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+	console.log('Deploying contracts...');
 	const { deployments, getNamedAccounts } = hre;
 	const { deploy } = deployments;
 
@@ -29,7 +30,7 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 
 	const gateway = await deploy('Gateway', {
 		from: deployerWallet,
-		args: [factory.address, [[deployerWallet]]],
+		args: [factory.address, [deployerWallet]],
 		log: true,
 	});
 
@@ -40,4 +41,4 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 };
 
 export default deployContracts;
-deployContracts.tags = ['IdFactory', 'ImplementationAuthority', 'Identity'];
+deployContracts.tags = ['IdFactory', 'ImplementationAuthority', 'Identity', 'Gateway'];
