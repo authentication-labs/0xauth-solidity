@@ -3,10 +3,9 @@ pragma solidity 0.8.17;
 
 
 import "../ClaimIssuer.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract IssuerFactory is Ownable {
+contract IssuerFactory {
     event Deployed(address addr, bytes32 salt);
 
     mapping(bytes32 => bool) private _saltUsed;

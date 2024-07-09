@@ -326,6 +326,9 @@ contract Identity is Storage, IIdentity, Version {
 			_claimsByTopic[_topic].push(claimId);
 			_claims[claimId].issuer = _issuer;
 
+			// Call Factory, Get Bridge
+			// Call Bridge, Send Claim
+
 			emit ClaimAdded(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);
 		} else {
 			emit ClaimChanged(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);

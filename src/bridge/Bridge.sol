@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.19;
+pragma solidity 0.8.17;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
@@ -7,6 +7,9 @@ import {IIdentity} from "../interface/IIdentity.sol";
 
 contract CrossChainBridge {
     address immutable i_router;
+
+    // Map to store the messageIds of the messages sent
+    mapping(bytes32 => bool) public messageIds;
 
     event MessageSent(bytes32 messageId);
     event MessageReceived(bytes32 messageId, uint64 sourceChainSelector, address sender, string action);
@@ -66,10 +69,11 @@ contract CrossChainBridge {
         address receiver,
         bytes memory payload
     ) internal {
+
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver),
             data: payload,
-            tokenAmounts: new Client.EVMTokenAmount ,
+            tokenAmounts: new Client.EVMTokenAmount[](0),
             extraArgs: "",
             feeToken: address(0) // Use native token
         });
@@ -84,8 +88,12 @@ contract CrossChainBridge {
     function handleCrossChainMessage(Client.Any2EVMMessage memory message) external {
         require(msg.sender == i_router, "Only router can call this function");
 
-        (string memory action, bytes memory data) = abi.decode(message.data, (string, bytes));
-        address targetIdentity = abi.decode(message.receiver, (address));
+        // Check if the message was already processed
+        require(!messageIds[message.messageId], "Message already processed");
+        messageIds[message.messageId] = true;
+
+        // Decode the message data
+        (address targetIdentity, string memory action, bytes memory data) = abi.decode(message.data, (address, string, bytes));
 
         if (keccak256(bytes(action)) == keccak256(bytes("AddClaim"))) {
             (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory decodedData, string memory uri) = abi.decode(data, (uint256, uint256, address, bytes, bytes, string));

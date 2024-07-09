@@ -7,6 +7,8 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 
 	const { deployerWallet } = await getNamedAccounts();
 
+	console.log(`Deploying contracts with the account: ${deployerWallet}`);
+
 	const identityImplementation = await deploy('Identity', {
 		from: deployerWallet,
 		args: [deployerWallet, true],
@@ -25,9 +27,16 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 		log: true,
 	});
 
+	const gateway = await deploy('Gateway', {
+		from: deployerWallet,
+		args: [factory.address, [[deployerWallet]]],
+		log: true,
+	});
+
 	console.log(`Deployed Identity implementation at ${identityImplementation.address}`);
 	console.log(`Deployed Implementation Authority at ${implementationAuthority.address}`);
 	console.log(`Deployed Factory at ${factory.address}`);
+	console.log(`Deployed Gateway at ${gateway.address}`);
 };
 
 export default deployContracts;
