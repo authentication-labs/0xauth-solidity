@@ -12,7 +12,7 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 
     const crossChainBridge = await deploy('CrossChainBridge', {
         from: deployerWallet,
-        args: ["0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2"], // Optimism Sepolia
+        args: ["0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2"], // Polygon Router
         log: true,
     });
 
