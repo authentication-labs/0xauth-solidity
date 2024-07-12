@@ -27,7 +27,9 @@ contract Identity is Storage, IIdentity, Version {
 	 */
 	modifier onlyManager() {
 		require(
-			msg.sender == address(this) || keyHasPurpose(keccak256(abi.encode(msg.sender)), 1),
+			msg.sender == address(this) ||
+				msg.sender == idFactory.getBridge() ||
+				keyHasPurpose(keccak256(abi.encode(msg.sender)), 1),
 			"Permissions: Sender does not have management key"
 		);
 		_;
@@ -38,7 +40,9 @@ contract Identity is Storage, IIdentity, Version {
 	 */
 	modifier onlyClaimKey() {
 		require(
-			msg.sender == address(this) || keyHasPurpose(keccak256(abi.encode(msg.sender)), 3),
+			msg.sender == address(this) ||
+				msg.sender == idFactory.getBridge() ||
+				keyHasPurpose(keccak256(abi.encode(msg.sender)), 3),
 			"Permissions: Sender does not have claim signer key"
 		);
 		_;
