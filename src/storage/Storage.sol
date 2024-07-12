@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.17;
 import "./Structs.sol";
+import {IdFactory} from "../factory/IdFactory.sol";
 
 contract Storage is Structs {
+	// factory address
+	IdFactory public idFactory;
+
 	// nonce used by the execute/approve function
 	uint256 internal _executionNonce;
 

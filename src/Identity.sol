@@ -5,6 +5,7 @@ import "./interface/IIdentity.sol";
 import "./interface/IClaimIssuer.sol";
 import "./version/Version.sol";
 import "./storage/Storage.sol";
+import {CrossChainBridge} from "./bridge/Bridge.sol";
 
 /**
  * @dev Implementation of the `IERC734` "KeyHolder" and the `IERC735` "ClaimHolder" interfaces
@@ -49,7 +50,7 @@ contract Identity is Storage, IIdentity, Version {
 	 * @param _isLibrary boolean value stating if the contract is library or not
 	 * calls __Identity_init if contract is not library
 	 */
-	constructor(address initialManagementKey, bool _isLibrary) {
+	constructor(address initialManagementKey, bool _isLibrary, address idFactoryAddress) {
 		require(initialManagementKey != address(0), "invalid argument - zero address");
 
 		if (!_isLibrary) {
@@ -57,6 +58,8 @@ contract Identity is Storage, IIdentity, Version {
 		} else {
 			_initialized = true;
 		}
+
+		idFactory = IdFactory(idFactoryAddress);
 	}
 
 	/**
@@ -186,6 +189,24 @@ contract Identity is Storage, IIdentity, Version {
 
 		emit KeyAdded(_key, _purpose, _type);
 
+		bool isHomeChain = idFactory._isHomeChain();
+		if (isHomeChain) {
+			address bridgeAddress = idFactory.getBridge();
+			// Explicit conversion to payable address and then to CrossChainBridge
+			CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
+
+			// Get Destination Chain Selectors and their receivers
+			address[] memory receivers = idFactory.getReceivers();
+			uint64[] memory chainSelectors = idFactory.getChainSelectors();
+
+			// Send message to the bridge
+			for (uint i = 0; i < receivers.length; i++) {
+				if (receivers[i] != address(bridge)) {
+					bridge.sendAddKey(chainSelectors[i], receivers[i], address(this), _key, _purpose, _type);
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -278,6 +299,24 @@ contract Identity is Storage, IIdentity, Version {
 
 		emit KeyRemoved(_key, _purpose, keyType);
 
+		bool isHomeChain = idFactory._isHomeChain();
+		if (isHomeChain) {
+			address bridgeAddress = idFactory.getBridge();
+			// Explicit conversion to payable address and then to CrossChainBridge
+			CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
+
+			// Get Destination Chain Selectors and their receivers
+			address[] memory receivers = idFactory.getReceivers();
+			uint64[] memory chainSelectors = idFactory.getChainSelectors();
+
+			// Send message to the bridge
+			for (uint i = 0; i < receivers.length; i++) {
+				if (receivers[i] != address(bridge)) {
+					bridge.sendRemoveKey(chainSelectors[i], receivers[i], address(this), _key, _purpose);
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -333,6 +372,35 @@ contract Identity is Storage, IIdentity, Version {
 		} else {
 			emit ClaimChanged(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);
 		}
+
+		bool isHomeChain = idFactory._isHomeChain();
+		if (isHomeChain) {
+			address bridgeAddress = idFactory.getBridge();
+			// Explicit conversion to payable address and then to CrossChainBridge
+			CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
+
+			// Get Destination Chain Selectors and their receivers
+			address[] memory receivers = idFactory.getReceivers();
+			uint64[] memory chainSelectors = idFactory.getChainSelectors();
+
+			// Send message to the bridge
+			for (uint i = 0; i < receivers.length; i++) {
+				if (receivers[i] != address(bridge)) {
+					bridge.sendAddClaim(
+						chainSelectors[i],
+						receivers[i],
+						address(this),
+						_topic,
+						_scheme,
+						_issuer,
+						_signature,
+						_data,
+						_uri
+					);
+				}
+			}
+		}
+
 		return claimId;
 	}
 
@@ -377,6 +445,24 @@ contract Identity is Storage, IIdentity, Version {
 		);
 
 		delete _claims[_claimId];
+
+		bool isHomeChain = idFactory._isHomeChain();
+		if (isHomeChain) {
+			address bridgeAddress = idFactory.getBridge();
+			// Explicit conversion to payable address and then to CrossChainBridge
+			CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
+
+			// Get Destination Chain Selectors and their receivers
+			address[] memory receivers = idFactory.getReceivers();
+			uint64[] memory chainSelectors = idFactory.getChainSelectors();
+
+			// Send message to the bridge
+			for (uint i = 0; i < receivers.length; i++) {
+				if (receivers[i] != address(bridge)) {
+					bridge.sendRemoveClaim(chainSelectors[i], receivers[i], address(this), _claimId);
+				}
+			}
+		}
 
 		return true;
 	}

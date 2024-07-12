@@ -17,6 +17,8 @@ node_modules/
 contractsInfo.json
 deployments/hardhat
 deployments/localhost
+deployments/c1
+deployments/c2
 
 /.dapp
 

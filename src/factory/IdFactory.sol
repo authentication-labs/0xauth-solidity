@@ -28,10 +28,21 @@ contract IdFactory is IIdFactory, Ownable {
 	// token linked to an ONCHAINID
 	mapping(address => address) private _tokenAddress;
 
+	// flag to check if the contract is on the home chain
+	bool public _isHomeChain;
+
+	// DetinationChainSelectors and Receivers address (Receiver is the Bridge contract on the destination chain)
+	mapping(uint64 => address) public destinationChainSelectorToReceiver;
+	uint64[] private chainSelectors;
+
+	// CrossChainBridge address
+	address public bridge;
+
 	// setting
-	constructor(address implementationAuthority) {
+	constructor(address implementationAuthority, bool isHomeChain) {
 		require(implementationAuthority != address(0), "invalid argument - zero address");
 		_implementationAuthority = implementationAuthority;
+		_isHomeChain = isHomeChain;
 	}
 
 	/**
@@ -165,6 +176,64 @@ contract IdFactory is IIdFactory, Ownable {
 	}
 
 	/**
+	 *  @dev See {IdFactory-addReceiver}.
+	 */
+
+	function addReceiver(uint64 _chainSelector, address _receiver) external override onlyOwner {
+		require(_receiver != address(0), "invalid argument - zero address");
+		require(destinationChainSelectorToReceiver[_chainSelector] == address(0), "receiver already added");
+		destinationChainSelectorToReceiver[_chainSelector] = _receiver;
+		chainSelectors.push(_chainSelector);
+		emit ReceiverAdded(_chainSelector, _receiver);
+	}
+
+	/**
+	 *  @dev See {IdFactory-removeReceiver}.
+	 */
+
+	function removeReceiver(uint64 _chainSelector) external override onlyOwner {
+		require(destinationChainSelectorToReceiver[_chainSelector] != address(0), "receiver not added");
+		delete destinationChainSelectorToReceiver[_chainSelector];
+		uint256 length = chainSelectors.length;
+		for (uint256 i = 0; i < length; i++) {
+			if (chainSelectors[i] == _chainSelector) {
+				chainSelectors[i] = chainSelectors[length - 1];
+				chainSelectors.pop();
+				break;
+			}
+		}
+		emit ReceiverRemoved(_chainSelector);
+	}
+
+	/**
+	 *  @dev See {IdFactory-getChainSelectors}.
+	 */
+
+	function getChainSelectors() external view override returns (uint64[] memory) {
+		return chainSelectors;
+	}
+
+	/**
+	 *  @dev See {IdFactory-getReceiver}.
+	 */
+
+	function getReceiver(uint64 _chainSelector) external view override returns (address) {
+		return destinationChainSelectorToReceiver[_chainSelector];
+	}
+
+	/**
+	 *  @dev See {IdFactory-getReceivers}.
+	 */
+
+	function getReceivers() external view override returns (address[] memory) {
+		address[] memory receivers = new address[](chainSelectors.length);
+		for (uint256 i = 0; i < chainSelectors.length; i++) {
+			receivers[i] = destinationChainSelectorToReceiver[chainSelectors[i]];
+		}
+		return receivers;
+	}
+
+	/**
 	 *  @dev See {IdFactory-getIdentity}.
 	 */
 	function getIdentity(address _wallet) external view override returns (address) {
@@ -208,6 +277,22 @@ contract IdFactory is IIdFactory, Ownable {
 	 */
 	function implementationAuthority() public view override returns (address) {
 		return _implementationAuthority;
+	}
+
+	/**
+	 *
+	 * @param _bridge the address of the bridge contract
+	 */
+	function setBridge(address _bridge) external onlyOwner {
+		require(_bridge != address(0), "invalid argument - zero address");
+		bridge = _bridge;
+	}
+
+	/**
+	 *  @dev get bridge address
+	 */
+	function getBridge() external view returns (address) {
+		return bridge;
 	}
 
 	// deploy function with create2 opcode call

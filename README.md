@@ -145,3 +145,14 @@ This will test the contract against a temporary fork of the specified network.
 This will deploy the contract against a fork of the specified network and it will keep running as a node.
 
 Behind the scene it uses `hardhat node` command so you can append any argument for it
+
+
+
+### Deploy to Amoy
+`pnpm run deploy amoy --tags Gateway`
+
+### Deploy to Sepolia
+`pnpm run deploy sepolia --tags Gateway`
+
+### Run Script on Amoy
+`pnpm run execute amoy scripts/transfer.ts`

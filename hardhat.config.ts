@@ -44,6 +44,16 @@ const config: HardhatUserConfig = {
 			url: node_url('localhost'),
 			accounts: accounts(),
 		},
+		c1: {
+			url: node_url('localone'),
+			accounts: accounts(),
+			chainId: 666
+		},
+		c2: {
+			url: node_url('localtwo'),
+			accounts: accounts(),
+			chainId: 999
+		},
 		staging: {
 			url: node_url('rinkeby'),
 			accounts: accounts('rinkeby'),

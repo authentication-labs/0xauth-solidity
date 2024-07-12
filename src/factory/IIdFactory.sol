@@ -24,6 +24,12 @@ interface IIdFactory {
 	// event emitted when a previously recorded token factory address is removed
 	event TokenFactoryRemoved(address indexed factory);
 
+	// event emitted when a receiver is added for a chainSelector
+	event ReceiverAdded(uint64 chainSelector, address receiver);
+
+	// event emitted when a receiver is removed for a chainSelector
+	event ReceiverRemoved(uint64 chainSelector);
+
 	/// functions
 
 	/**
@@ -69,6 +75,14 @@ interface IIdFactory {
 	function createTokenIdentity(address _token, address _tokenOwner, string memory _salt) external returns (address);
 
 	/**
+	 * @dev function used to update bridge contract address
+	 * @param _bridge the address of the bridge contract
+	 * can be called only by Owner
+	 */
+
+	function setBridge(address _bridge) external;
+
+	/**
 	 *  @dev function used to link a new wallet to an existing identity
 	 *  @param _newWallet the address of the wallet to link
 	 *  requires msg.sender to be linked to an existing onchainid
@@ -107,6 +121,25 @@ interface IIdFactory {
 	function removeTokenFactory(address _factory) external;
 
 	/**
+	 *  @dev function used to add a receiver for a chainSelector
+	 *  @param _chainSelector the chainSelector for which the receiver is added
+	 *  @param _receiver the address of the receiver
+	 *  can be called only by Owner
+	 *  _receiver cannot be registered yet
+	 *  once the receiver has been registered it can receive messages from the chainSelector
+	 */
+	function addReceiver(uint64 _chainSelector, address _receiver) external;
+
+	/**
+	 *  @dev function used to remove a receiver for a chainSelector
+	 *  @param _chainSelector the chainSelector for which the receiver is removed
+	 *  can be called only by Owner
+	 *  _receiver has to be registered previously
+	 *  once the receiver has been removed it cannot receive messages from the chainSelector anymore
+	 */
+	function removeReceiver(uint64 _chainSelector) external;
+
+	/**
 	 *  @dev getter for OID contract corresponding to a wallet/token
 	 *  @param _wallet the wallet/token address
 	 */
@@ -143,4 +176,25 @@ interface IIdFactory {
 	 * @dev getter for the implementation authority used by this factory.
 	 */
 	function implementationAuthority() external view returns (address);
+
+	/**
+	 * @dev getter for the receiver of a chainSelector
+	 * @param _chainSelector the chainSelector for which the receiver is fetched
+	 */
+	function getReceiver(uint64 _chainSelector) external view returns (address);
+
+	/**
+	 * @dev getter for the list of chainSelectors
+	 */
+	function getChainSelectors() external view returns (uint64[] memory);
+
+	/**
+	 * @dev getter for the list of receivers
+	 */
+	function getReceivers() external view returns (address[] memory);
+
+	/**
+	 * @dev getter for the bridge contract address
+	 */
+	function bridge() external view returns (address);
 }
