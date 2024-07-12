@@ -24,7 +24,7 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
 
 	const factory = await deploy('IdFactory', {
 		from: deployerWallet,
-		args: [implementationAuthority.address],
+		args: [implementationAuthority.address, true],
 		log: true,
 	});
 
