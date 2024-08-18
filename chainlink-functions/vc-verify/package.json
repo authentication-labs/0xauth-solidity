@@ -1,0 +1,16 @@
+{
+  "name": "vc-verify",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chainlink/functions-toolkit": "^0.3.1",
+    "@zkp-ld/jsonld-proofs": "^0.12.2",
+    "rollup-plugin-esnext": "^0.1.0"
+  }
+}
