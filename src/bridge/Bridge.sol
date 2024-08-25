@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.17;
 
+// Chainlink
 import { IRouterClient } from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
 import { CCIPReceiver } from '@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol';
-
 import { Client } from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
+// OpenZeppelin
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 import { ReentrancyGuard } from '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+// Interfaces
 import { IIdentity } from '../interface/IIdentity.sol';
 import { Gateway } from '../gateway/Gateway.sol';
+import '../factory/IIdFactory.sol';
+
 /// @notice REmOVE in PROD
 import 'hardhat/console.sol';
 
@@ -17,6 +21,7 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   string public ccipMessage;
 
   address immutable i_router;
+  address public idFactoryAddress;
 
   // Map to store the messageIds of the messages sent
   mapping(bytes32 => bool) public messageIds;
@@ -51,18 +56,35 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     _;
   }
 
+  modifier onlyAllowedIdentity(address _identity) {
+    IIdFactory idFactory = IIdFactory(idFactoryAddress);
+    require(idFactory.identityIsCreated(_identity), 'Permissions: idFactory marks this address as not identity');
+    _;
+  }
+
   event AllowedAddress(address indexed _address, uint64 indexed _type, bool indexed _status);
 
-  event MessageSent(bytes32 messageId);
-  event MessageReceived(bytes32 messageId, uint64 sourceChainSelector, address sender, string action);
+  event MessageSent(bytes32 indexed messageId);
+  event MessageReceived(
+    bytes32 messageId,
+    uint64 indexed sourceChainSelector,
+    address indexed sender,
+    string indexed action
+  );
+  event IdFactoryUpdated(address indexed sender, address indexed newAddress);
 
-  constructor(address senderRouter, address recieverRouter) CCIPReceiver(recieverRouter) {
-    i_router = senderRouter;
+  constructor(address _router) CCIPReceiver(_router) {
+    i_router = _router;
     isManager[msg.sender] = true;
     emit AllowedAddress(msg.sender, uint64(AccessAddressTypes.MANAGER), true);
   }
 
   receive() external payable {}
+
+  function setFactoryAddress(address _idFactoryAddress) external onlyManager {
+    idFactoryAddress = _idFactoryAddress;
+    emit IdFactoryUpdated(msg.sender, _idFactoryAddress);
+  }
 
   function sendAddClaim(
     uint64 destinationChainSelector,
@@ -96,9 +118,10 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     bytes32 key,
     uint256 purpose,
     uint256 keyType
-  ) external onlyAllowedSender {
-    bytes memory payload = abi.encode('AddKey', identity, key, purpose, keyType);
-    _sendMessage(destinationChainSelector, receiver, payload);
+  ) external onlyAllowedIdentity(identity) {
+    bytes memory _payload = abi.encode(identity, key, purpose, keyType);
+    bytes memory metaPayload = abi.encode('AddKey', _payload);
+    _sendMessage(destinationChainSelector, receiver, metaPayload);
   }
 
   function sendRemoveKey(
@@ -156,9 +179,12 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
       // } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveClaim'))) {
       //   bytes32 claimId = abi.decode(data, (bytes32));
       //   IIdentity(targetContract).removeClaim(claimId);
-      // } else if (keccak256(bytes(action)) == keccak256(bytes('AddKey'))) {
-      //   (bytes32 key, uint256 purpose, uint256 keyType) = abi.decode(data, (bytes32, uint256, uint256));
-      //   IIdentity(targetContract).addKey(key, purpose, keyType);
+    } else if (keccak256(bytes(action)) == keccak256(bytes('AddKey'))) {
+      (address targetIdentity, bytes32 key, uint256 purpose, uint256 keyType) = abi.decode(
+        _payload,
+        (address, bytes32, uint256, uint256)
+      );
+      IIdentity(targetIdentity).addKey(key, purpose, keyType);
       // } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveKey'))) {
       //   (bytes32 key, uint256 purpose) = abi.decode(data, (bytes32, uint256));
       //   IIdentity(targetContract).removeKey(key, purpose);

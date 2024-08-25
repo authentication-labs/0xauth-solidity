@@ -13,128 +13,166 @@ import { CrossChainBridge, IdFactory } from '../../typechain-types';
 import { generateWallet } from '../../utils/wallet-generate';
 import { Wallet } from 'ethers';
 
-// 1st Terminal: npx hardhat node
-// 2nd Terminal: npx hardhat run ./scripts/myScript.ts --network localhost
+describe('Bridge Fork Test', function () {
+  console.log('Starting Test');
+  before(async () => {
+    const BASE = node_url('BASE_SEPOLIA'); // Archive node
+    const ARB = node_url('ARB_SEPOLIA'); // Archive node
 
-async function main() {
-  const BASE = node_url('BASE_SEPOLIA'); // Archive node
-  const ARB = node_url('ARB_SEPOLIA'); // Archive node
+    const [
+      _0xAuthFundingWallet,
+      claimIssuerWallet,
+      aliceWallet,
+      bobWallet,
+      carolWallet,
+      davidWallet,
+    ] = await ethers.getSigners();
 
-  const [
-    _0xAuthFundingWallet,
-    claimIssuerWallet,
-    aliceWallet,
-    bobWallet,
-    carolWallet,
-    davidWallet,
-  ] = await ethers.getSigners();
+    const _newDeployerWallet = await generateWallet();
 
-  const _newDeployerWallet = await generateWallet();
-
-  const newDeployerWallet = new Wallet(
-    _newDeployerWallet.privateKey,
-    ethers.provider,
-  );
-
-  await SETUP_NETWORK('BASE', BASE);
-
-  let { BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
-    await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet);
-
-  await SETUP_NETWORK('ARB', ARB);
-
-  let { BRIDGE_CONTRACT, identityFactory } = await deploy_fixture_arb(
-    _0xAuthFundingWallet,
-    newDeployerWallet,
-  );
-
-  console.log(
-    '-> Step : ID factory ARB: setup bridge, gateway, chain selectors',
-  );
-
-  await identityFactory
-    .connect(newDeployerWallet)
-    .setBridge(BRIDGE_CONTRACT.target);
-
-  await identityFactory
-    .connect(newDeployerWallet)
-    .addReceiver(
-      (
-        await CONTRACT_CONFIG()
-      ).ccipChainSelectorBase,
-      BRIDGE_CONTRACT_BASE.target,
-      GATEWAY_BASE.target,
+    const newDeployerWallet = new Wallet(
+      _newDeployerWallet.privateKey,
+      ethers.provider,
     );
 
-  console.log('-> Step : Bridge ARB: whitelist ID factory');
+    await SETUP_NETWORK('BASE', BASE);
 
-  await BRIDGE_CONTRACT.connect(newDeployerWallet).setAllowedContract(
-    identityFactory.target,
-    true,
-  );
+    let { BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
+      await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet);
 
-  console.log('-> Step : Bridge ARB: Fund bridge');
+    await SETUP_NETWORK('ARB', ARB);
 
-  await _0xAuthFundingWallet.sendTransaction({
-    to: await BRIDGE_CONTRACT.getAddress(),
-    value: ethers.parseEther('2.0'),
+    let { BRIDGE_CONTRACT, identityFactory } = await deploy_fixture_arb(
+      _0xAuthFundingWallet,
+      newDeployerWallet,
+    );
+
+    console.log(
+      '-> Step : ID factory ARB: setup bridge, gateway, chain selectors',
+    );
+
+    await identityFactory
+      .connect(newDeployerWallet)
+      .setBridge(BRIDGE_CONTRACT.target);
+
+    await identityFactory
+      .connect(newDeployerWallet)
+      .addReceiver(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipChainSelectorBase,
+        BRIDGE_CONTRACT_BASE.target,
+        GATEWAY_BASE.target,
+      );
+
+    console.log(
+      '-> Step : Bridge ARB: whitelist ID factory and setup id factory',
+    );
+
+    await BRIDGE_CONTRACT.connect(newDeployerWallet).setAllowedContract(
+      identityFactory.target,
+      true,
+    );
+
+    await BRIDGE_CONTRACT.connect(newDeployerWallet).setFactoryAddress(
+      identityFactory.target,
+    );
+
+    console.log('-> Step : Bridge ARB: Fund bridge');
+
+    await _0xAuthFundingWallet.sendTransaction({
+      to: await BRIDGE_CONTRACT.getAddress(),
+      value: ethers.parseEther('2.0'),
+    });
+
+    console.log('-> Step : ID factory ARB: Create identity');
+
+    const tx = await identityFactory
+      .connect(newDeployerWallet)
+      .createIdentity(davidWallet.address, 'salt1');
+
+    await expect(tx).to.emit(identityFactory, 'WalletLinked');
+    await expect(tx).to.emit(identityFactory, 'Deployed');
+
+    const receipt = await tx.wait();
+    if (!receipt) return;
+    const evm2EvmMessage = getEvm2EvmMessage(receipt);
+
+    const identity = await ethers.getContractAt(
+      'Identity',
+      await identityFactory.getIdentity(davidWallet.address),
+    );
+    console.log('Identity ARB Address:', await identity.getAddress());
+
+    console.log('-> Step : Identity ARB: Add key');
+
+    const aliceKeyHash = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ['address'],
+        [aliceWallet.address],
+      ),
+    );
+
+    // David adds Alice's key
+    const tx_addKey = await identity
+      .connect(davidWallet)
+      .addKey(aliceKeyHash, 1, 1);
+    const receipt_addKey = await tx_addKey.wait();
+
+    const aliceKey = await identity.getKey(aliceKeyHash);
+    expect(aliceKey.key).to.equal(aliceKeyHash);
+
+    if (!receipt_addKey) return;
+    const evm2EvmMessage_addKey = getEvm2EvmMessage(receipt_addKey);
+
+    await SETUP_NETWORK('BASE', BASE);
+
+    ({ BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
+      await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet));
+
+    console.log('-> Step : ID factory BASE: setup bridge, gateway');
+    await identityFactory_BASE
+      .connect(newDeployerWallet)
+      .setAllowedContract(GATEWAY_BASE.target, true);
+    await identityFactory_BASE
+      .connect(newDeployerWallet)
+      .setAllowedContract(BRIDGE_CONTRACT_BASE.target, true);
+
+    console.log('-> Step : CCIP BASE: Forward message');
+
+    if (!evm2EvmMessage) return;
+    await routeMessage(
+      (
+        await CONTRACT_CONFIG()
+      ).ccipRouterAddressBase,
+      evm2EvmMessage,
+    );
+
+    const identity_twin = await ethers.getContractAt(
+      'Identity',
+      await identityFactory_BASE.getIdentity(davidWallet.address),
+    );
+
+    console.log('Identity BASE Address:', await identity_twin.getAddress());
+
+    if (!evm2EvmMessage_addKey) return;
+    await routeMessage(
+      (
+        await CONTRACT_CONFIG()
+      ).ccipRouterAddressBase,
+      evm2EvmMessage_addKey,
+    );
+
+    const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
+    expect(aliceKey_BASE.key).to.equal(aliceKeyHash);
+
+    /**
+     */
   });
 
-  console.log('-> Step : ID factory ARB: Create identity');
-
-  const tx = await identityFactory
-    .connect(newDeployerWallet)
-    .createIdentity(davidWallet.address, 'salt1');
-
-  await expect(tx).to.emit(identityFactory, 'WalletLinked');
-  await expect(tx).to.emit(identityFactory, 'Deployed');
-
-  const receipt = await tx.wait();
-  if (!receipt) return;
-  const evm2EvmMessage = getEvm2EvmMessage(receipt);
-
-  const identity = await ethers.getContractAt(
-    'Identity',
-    await identityFactory.getIdentity(davidWallet.address),
-  );
-  console.log('Identity ARB Address:', await identity.getAddress());
-
-  await SETUP_NETWORK('BASE', BASE);
-
-  ({ BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
-    await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet));
-
-  console.log('-> Step : ID factory BASE: setup bridge, gateway');
-  await identityFactory_BASE
-    .connect(newDeployerWallet)
-    .setAllowedContract(GATEWAY_BASE.target, true);
-  await identityFactory_BASE
-    .connect(newDeployerWallet)
-    .setAllowedContract(BRIDGE_CONTRACT_BASE.target, true);
-
-  console.log('-> Step : CCIP BASE: Forward message');
-
-  if (!evm2EvmMessage) return;
-  await routeMessage(
-    (
-      await CONTRACT_CONFIG()
-    ).ccipRouterAddressBase,
-    evm2EvmMessage,
-  );
-
-  const identity_twin = await ethers.getContractAt(
-    'Identity',
-    await identityFactory_BASE.getIdentity(davidWallet.address),
-  );
-
-  console.log('Identity BASE Address:', await identity_twin.getAddress());
-  /**
-   */
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+  it('Bridge fork working ', async function () {
+    console.log('Bridge fork working');
+  });
 });
 
 async function SETUP_NETWORK(_network: string, rpc: string) {
@@ -218,12 +256,6 @@ async function deploy_fixture_base(
     (
       await CONTRACT_CONFIG()
     ).ccipRouterAddressBase,
-    (
-      await CONTRACT_CONFIG()
-    ).ccipRouterAddressBase,
-    {
-      // nonce: BASE_NONCE['BRIDGE'],
-    },
   );
 
   console.log('BRIDGE_CONTRACT_BASE : ', BRIDGE_CONTRACT_BASE.target);
@@ -291,9 +323,6 @@ async function deploy_fixture_arb(
     (
       await CONTRACT_CONFIG()
     ).ccipRouterAddressArbSepolia,
-    (
-      await CONTRACT_CONFIG()
-    ).ccipRouterAddressArbSepolia,
   );
 
   console.log('BRIDGE_CONTRACT : ', BRIDGE_CONTRACT.target);
@@ -327,3 +356,8 @@ async function deploy_fixture_arb(
 
   return { BRIDGE_CONTRACT, identityFactory };
 }
+
+// main().catch((error) => {
+//   console.error(error);
+//   process.exitCode = 1;
+// });

@@ -49,6 +49,9 @@ contract IdFactory is IIdFactory, Ownable {
   // Map to store onlyManagers
   mapping(address => bool) public isManager;
 
+  // Map to store created identities
+  mapping(address => bool) public isCreatedIdentity;
+
   // Define the enum
   enum AccessAddressTypes {
     CONTRACT,
@@ -114,10 +117,6 @@ contract IdFactory is IIdFactory, Ownable {
     address _wallet,
     string memory _salt
   ) external override onlyAllowedSender returns (address identity) {
-    // console.log('Home Chain %s', _isHomeChain);
-    // console.log('_wallet %s', _wallet);
-    // console.log('_salt %s', _salt);
-
     require(_wallet != address(0), 'invalid argument - zero address');
     require(keccak256(abi.encode(_salt)) != keccak256(abi.encode('')), 'invalid argument - empty string');
     require(!_saltTaken[_salt], 'salt already taken');
@@ -128,6 +127,7 @@ contract IdFactory is IIdFactory, Ownable {
     _wallets[identity].push(_wallet);
     emit WalletLinked(_wallet, identity);
 
+    isCreatedIdentity[identity] = true;
     if (_isHomeChain == true) {
       bytes32[] memory _keys;
       _bridgeCreateIdentity(_wallet, _salt, _keys);
@@ -383,7 +383,7 @@ contract IdFactory is IIdFactory, Ownable {
     address _wallet
   ) private returns (address) {
     bytes memory _code = type(IdentityProxy).creationCode;
-    bytes memory _constructData = abi.encode(implementationAuthority, _wallet);
+    bytes memory _constructData = abi.encode(implementationAuthority, _wallet, address(this));
     bytes memory bytecode = abi.encodePacked(_code, _constructData);
     return _deploy(_salt, bytecode);
   }
@@ -423,5 +423,9 @@ contract IdFactory is IIdFactory, Ownable {
     isManager[_manager] = _status;
 
     emit AllowedAddress(_manager, uint64(AccessAddressTypes.MANAGER), _status);
+  }
+
+  function identityIsCreated(address _identity) external view returns (bool) {
+    return isCreatedIdentity[_identity];
   }
 }

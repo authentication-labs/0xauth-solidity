@@ -15,8 +15,7 @@
 - https://github.com/smartcontractkit/chainlink-local/tree/main
 - https://docs.chain.link/ccip/tutorials/send-arbitrary-data-receipt-acknowledgment
 
-### Usage of CCIP for 0xAuth
+### Test CCIP for 0xAuth
 
-- addClaim , addKey,
-- update bridge contract, add modifier access, withdraw link.
-- one gateway function
+- idFactory, Implementation contract address should be same on all chains
+- `npx hardhat test test/0xAuth/simple-bridge-fork.test.ts`

@@ -198,4 +198,9 @@ interface IIdFactory {
    * @dev getter for the bridge contract address
    */
   function bridge() external view returns (address);
+
+  /**
+   * @dev getter for the created Identites
+   */
+  function identityIsCreated(address identity) external view returns (bool);
 }
