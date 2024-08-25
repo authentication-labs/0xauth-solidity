@@ -7,7 +7,7 @@ import '../interface/IERC734.sol';
 import { CrossChainBridge } from '../bridge/Bridge.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
-
+/// @notice REMOVE in prod
 import 'hardhat/console.sol';
 
 contract IdFactory is IIdFactory, Ownable {
@@ -76,12 +76,15 @@ contract IdFactory is IIdFactory, Ownable {
   event AllowedAddress(address indexed _address, uint64 indexed _type, bool indexed _status);
 
   // setting
-  constructor(address implementationAuthority, bool isHomeChain) {
+  constructor(address _owner, address implementationAuthority, bool isHomeChain) {
     require(implementationAuthority != address(0), 'invalid argument - zero address');
+    require(_owner != address(0), 'invalid argument - zero address');
+
     _implementationAuthority = implementationAuthority;
     _isHomeChain = isHomeChain;
-    isManager[msg.sender] = true;
-    emit AllowedAddress(msg.sender, uint64(AccessAddressTypes.MANAGER), true);
+    isManager[_owner] = true;
+    _transferOwnership(_owner);
+    emit AllowedAddress(_owner, uint64(AccessAddressTypes.MANAGER), true);
   }
 
   /**

@@ -8,7 +8,10 @@ import { node_url, accounts, addForkConfiguration } from '../../utils/network';
 import { ethers, network } from 'hardhat';
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { Addressable } from 'ethers';
+import { ethers as v5ethers } from 'v5ethers';
+import { CrossChainBridge, IdFactory } from '../../typechain-types';
+import { generateWallet } from '../../utils/wallet-generate';
+import { Wallet } from 'ethers';
 
 // 1st Terminal: npx hardhat node
 // 2nd Terminal: npx hardhat run ./scripts/myScript.ts --network localhost
@@ -18,7 +21,7 @@ async function main() {
   const ARB = node_url('ARB_SEPOLIA'); // Archive node
 
   const [
-    deployerWallet,
+    _0xAuthFundingWallet,
     claimIssuerWallet,
     aliceWallet,
     bobWallet,
@@ -26,32 +29,35 @@ async function main() {
     davidWallet,
   ] = await ethers.getSigners();
 
-  // interface NonceMapping {
-  //   [contract: string]: number;
-  // }
+  const _newDeployerWallet = await generateWallet();
 
-  // const ARB_NONCE: NonceMapping = {};
-  // const BASE_NONCE: NonceMapping = {};
+  const newDeployerWallet = new Wallet(
+    _newDeployerWallet.privateKey,
+    ethers.provider,
+  );
 
   await SETUP_NETWORK('BASE', BASE);
 
   let { BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
-    await deploy_fixture_base(deployerWallet);
+    await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet);
 
   await SETUP_NETWORK('ARB', ARB);
 
   let { BRIDGE_CONTRACT, identityFactory } = await deploy_fixture_arb(
-    deployerWallet,
+    _0xAuthFundingWallet,
+    newDeployerWallet,
   );
 
-  console.log('ID factory ARB: setup bridge, gateway, chain selectors');
+  console.log(
+    '-> Step : ID factory ARB: setup bridge, gateway, chain selectors',
+  );
 
   await identityFactory
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .setBridge(BRIDGE_CONTRACT.target);
 
   await identityFactory
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .addReceiver(
       (
         await CONTRACT_CONFIG()
@@ -60,24 +66,24 @@ async function main() {
       GATEWAY_BASE.target,
     );
 
-  console.log('Bridge ARB: whitelist ID factory');
+  console.log('-> Step : Bridge ARB: whitelist ID factory');
 
-  await BRIDGE_CONTRACT.connect(deployerWallet).setAllowedContract(
+  await BRIDGE_CONTRACT.connect(newDeployerWallet).setAllowedContract(
     identityFactory.target,
     true,
   );
 
-  console.log('Bridge ARB: Fund bridge');
+  console.log('-> Step : Bridge ARB: Fund bridge');
 
-  await deployerWallet.sendTransaction({
+  await _0xAuthFundingWallet.sendTransaction({
     to: await BRIDGE_CONTRACT.getAddress(),
     value: ethers.parseEther('2.0'),
   });
 
-  console.log('ID factory ARB: Create identity');
+  console.log('-> Step : ID factory ARB: Create identity');
 
   const tx = await identityFactory
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .createIdentity(davidWallet.address, 'salt1');
 
   await expect(tx).to.emit(identityFactory, 'WalletLinked');
@@ -96,17 +102,17 @@ async function main() {
   await SETUP_NETWORK('BASE', BASE);
 
   ({ BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
-    await deploy_fixture_base(deployerWallet));
+    await deploy_fixture_base(_0xAuthFundingWallet, newDeployerWallet));
 
-  console.log('ID factory BASE: setup bridge, gateway');
+  console.log('-> Step : ID factory BASE: setup bridge, gateway');
   await identityFactory_BASE
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .setAllowedContract(GATEWAY_BASE.target, true);
   await identityFactory_BASE
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .setAllowedContract(BRIDGE_CONTRACT_BASE.target, true);
 
-  console.log('CCIP BASE: Forward message');
+  console.log('-> Step : CCIP BASE: Forward message');
 
   if (!evm2EvmMessage) return;
   await routeMessage(
@@ -192,16 +198,23 @@ async function CONTRACT_CONFIG() {
   };
 }
 
-async function deploy_fixture_base(deployerWallet: HardhatEthersSigner) {
+async function deploy_fixture_base(
+  _0xAuthFundingWallet: HardhatEthersSigner,
+  newDeployerWallet: Wallet,
+) {
+  await _0xAuthFundingWallet.sendTransaction({
+    to: newDeployerWallet.address,
+    value: ethers.parseEther('10.0'),
+  });
   const implementationAuthority = await (
     await CONTRACT_CONFIG()
-  ).ImplementationAuthority_Factory.connect(deployerWallet).deploy({});
+  ).ImplementationAuthority_Factory.connect(newDeployerWallet).deploy({});
 
   await implementationAuthority.waitForDeployment();
 
   const BRIDGE_CONTRACT_BASE = await (
     await CONTRACT_CONFIG()
-  ).Bridge_Factory.deploy(
+  ).Bridge_Factory.connect(newDeployerWallet).deploy(
     (
       await CONTRACT_CONFIG()
     ).ccipRouterAddressBase,
@@ -215,9 +228,11 @@ async function deploy_fixture_base(deployerWallet: HardhatEthersSigner) {
 
   console.log('BRIDGE_CONTRACT_BASE : ', BRIDGE_CONTRACT_BASE.target);
 
+  console.log('newDeployerWallet nonce : ', await newDeployerWallet.getNonce());
   const identityFactory_BASE = await (
     await CONTRACT_CONFIG()
-  ).IdFactory_Factory.connect(deployerWallet).deploy(
+  ).IdFactory_Factory.connect(newDeployerWallet).deploy(
+    newDeployerWallet.address,
     implementationAuthority.target,
     // NOTICE : Change it to false where isHomeChain should be false
     false,
@@ -226,22 +241,19 @@ async function deploy_fixture_base(deployerWallet: HardhatEthersSigner) {
 
   console.log('identityFactory_BASE : ', identityFactory_BASE.target);
 
-  // BASE_NONCE['Gateway'] = await deployerWallet.getNonce();
-
   const GATEWAY_BASE = await (
     await CONTRACT_CONFIG()
-  ).Gateway_Factory.connect(deployerWallet).deploy(
+  ).Gateway_Factory.connect(newDeployerWallet).deploy(
     await identityFactory_BASE.getAddress(),
-    [await BRIDGE_CONTRACT_BASE.getAddress(), deployerWallet.address],
-    // { nonce: BASE_NONCE['Gateway'] },
+    [await BRIDGE_CONTRACT_BASE.getAddress(), newDeployerWallet.address],
   );
 
   console.log('GATEWAY_BASE : ', GATEWAY_BASE.target);
 
   const identityImplementation = await (
     await CONTRACT_CONFIG()
-  ).Identity_Factory.connect(deployerWallet).deploy(
-    deployerWallet.address,
+  ).Identity_Factory.connect(newDeployerWallet).deploy(
+    newDeployerWallet.address,
     // NOTICE : Change it to true if contract isLibrary
     false,
     identityFactory_BASE.getAddress(),
@@ -249,51 +261,59 @@ async function deploy_fixture_base(deployerWallet: HardhatEthersSigner) {
   await identityImplementation.waitForDeployment();
 
   const tx_updateImplementation = await implementationAuthority
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .updateImplementation(identityImplementation.getAddress());
   await tx_updateImplementation.wait();
 
   return { BRIDGE_CONTRACT_BASE, identityFactory_BASE, GATEWAY_BASE };
 }
 
-async function deploy_fixture_arb(deployerWallet: HardhatEthersSigner) {
+async function deploy_fixture_arb(
+  _0xAuthFundingWallet: HardhatEthersSigner,
+  newDeployerWallet: Wallet,
+): Promise<{
+  BRIDGE_CONTRACT: CrossChainBridge;
+  identityFactory: IdFactory;
+}> {
+  await _0xAuthFundingWallet.sendTransaction({
+    to: newDeployerWallet.address,
+    value: ethers.parseEther('10.0'),
+  });
   const implementationAuthority = await (
     await CONTRACT_CONFIG()
-  ).ImplementationAuthority_Factory.connect(deployerWallet).deploy({});
+  ).ImplementationAuthority_Factory.connect(newDeployerWallet).deploy({});
 
   await implementationAuthority.waitForDeployment();
 
   let BRIDGE_CONTRACT = await (
     await CONTRACT_CONFIG()
-  ).Bridge_Factory.connect(deployerWallet).deploy(
+  ).Bridge_Factory.connect(newDeployerWallet).deploy(
     (
       await CONTRACT_CONFIG()
     ).ccipRouterAddressArbSepolia,
     (
       await CONTRACT_CONFIG()
     ).ccipRouterAddressArbSepolia,
-    {
-      // nonce: ARB_NONCE['BRIDGE'],
-    },
   );
 
   console.log('BRIDGE_CONTRACT : ', BRIDGE_CONTRACT.target);
 
+  console.log('newDeployerWallet nonce : ', await newDeployerWallet.getNonce());
   const identityFactory = await (
     await CONTRACT_CONFIG()
-  ).IdFactory_Factory.connect(deployerWallet).deploy(
+  ).IdFactory_Factory.connect(newDeployerWallet).deploy(
+    newDeployerWallet.address,
     implementationAuthority.target,
     // NOTICE : Change it to false where isHomeChain should be false
     true,
   );
   await identityFactory.waitForDeployment();
-
   console.log('identityFactory : ', identityFactory.target);
 
   const identityImplementation = await (
     await CONTRACT_CONFIG()
-  ).Identity_Factory.connect(deployerWallet).deploy(
-    deployerWallet.address,
+  ).Identity_Factory.connect(newDeployerWallet).deploy(
+    newDeployerWallet.address,
     // NOTICE : Change it to true if contract isLibrary
     false,
     identityFactory.getAddress(),
@@ -301,7 +321,7 @@ async function deploy_fixture_arb(deployerWallet: HardhatEthersSigner) {
   await identityImplementation.waitForDeployment();
 
   const tx_updateImplementation = await implementationAuthority
-    .connect(deployerWallet)
+    .connect(newDeployerWallet)
     .updateImplementation(identityImplementation.getAddress());
   await tx_updateImplementation.wait();
 
