@@ -125,6 +125,9 @@ describe('Bridge Fork Test', function () {
     if (!receipt_addKey) return;
     const evm2EvmMessage_addKey = getEvm2EvmMessage(receipt_addKey);
 
+    console.log('-> Step : Identity ARB: Add Claim');
+    /// TODO : Add claim
+
     await SETUP_NETWORK('BASE', BASE);
 
     ({ BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
@@ -266,7 +269,7 @@ async function deploy_fixture_base(
   ).IdFactory_Factory.connect(newDeployerWallet).deploy(
     newDeployerWallet.address,
     implementationAuthority.target,
-    // NOTICE : Change it to false where isHomeChain should be false
+    /// @notice : Change it to false where isHomeChain should be false
     false,
   );
   await identityFactory_BASE.waitForDeployment();
@@ -333,7 +336,7 @@ async function deploy_fixture_arb(
   ).IdFactory_Factory.connect(newDeployerWallet).deploy(
     newDeployerWallet.address,
     implementationAuthority.target,
-    // NOTICE : Change it to false where isHomeChain should be false
+    /// @notice : Change it to false where isHomeChain should be false
     true,
   );
   await identityFactory.waitForDeployment();
@@ -356,8 +359,3 @@ async function deploy_fixture_arb(
 
   return { BRIDGE_CONTRACT, identityFactory };
 }
-
-// main().catch((error) => {
-//   console.error(error);
-//   process.exitCode = 1;
-// });

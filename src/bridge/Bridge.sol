@@ -118,8 +118,8 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     bytes32 key,
     uint256 purpose,
     uint256 keyType
-  ) external onlyAllowedIdentity(identity) {
-    bytes memory _payload = abi.encode(identity, key, purpose, keyType);
+  ) external onlyAllowedIdentity(msg.sender) {
+    bytes memory _payload = abi.encode(msg.sender, key, purpose, keyType);
     bytes memory metaPayload = abi.encode('AddKey', _payload);
     _sendMessage(destinationChainSelector, receiver, metaPayload);
   }

@@ -102,7 +102,6 @@ contract Gateway is Ownable {
     bytes32[] calldata managementKeys
   ) public returns (address) {
     if (managementKeys.length == 0) {
-      // return deployIdentityWithSalt(identityOwner, 'REMOVE IN PROD');
       return deployIdentityWithSalt(identityOwner, salt);
     } else {
       return deployIdentityWithSaltAndManagementKeys(identityOwner, salt, managementKeys);
