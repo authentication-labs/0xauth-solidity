@@ -205,11 +205,9 @@ contract Identity is Storage, IIdentity, Version {
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
-          bridge.sendAddKey(chainSelectors[i], receivers[i], address(this), _key, _purpose, _type);
-        }
+        bridge.sendAddKey(chainSelectors[i], receivers[i], _key, _purpose, _type);
       }
-    }
+    } else {}
 
     return true;
   }

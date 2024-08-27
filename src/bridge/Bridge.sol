@@ -114,7 +114,6 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   function sendAddKey(
     uint64 destinationChainSelector,
     address receiver,
-    address identity,
     bytes32 key,
     uint256 purpose,
     uint256 keyType

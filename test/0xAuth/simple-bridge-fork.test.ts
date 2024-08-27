@@ -96,7 +96,7 @@ describe('Bridge Fork Test', function () {
 
     const receipt = await tx.wait();
     if (!receipt) return;
-    const evm2EvmMessage = getEvm2EvmMessage(receipt);
+    const evm2EvmMessage = await getEvm2EvmMessage(receipt);
 
     const identity = await ethers.getContractAt(
       'Identity',
@@ -123,7 +123,9 @@ describe('Bridge Fork Test', function () {
     expect(aliceKey.key).to.equal(aliceKeyHash);
 
     if (!receipt_addKey) return;
-    const evm2EvmMessage_addKey = getEvm2EvmMessage(receipt_addKey);
+    const evm2EvmMessage_addKey = await getEvm2EvmMessage(receipt_addKey);
+
+    if (!evm2EvmMessage_addKey) return;
 
     console.log('-> Step : Identity ARB: Add Claim');
     /// TODO : Add claim
@@ -140,6 +142,10 @@ describe('Bridge Fork Test', function () {
     await identityFactory_BASE
       .connect(newDeployerWallet)
       .setAllowedContract(BRIDGE_CONTRACT_BASE.target, true);
+
+    await identityFactory_BASE
+      .connect(newDeployerWallet)
+      .setBridge(BRIDGE_CONTRACT_BASE.target);
 
     console.log('-> Step : CCIP BASE: Forward message');
 
@@ -159,15 +165,20 @@ describe('Bridge Fork Test', function () {
     console.log('Identity BASE Address:', await identity_twin.getAddress());
 
     if (!evm2EvmMessage_addKey) return;
-    await routeMessage(
-      (
-        await CONTRACT_CONFIG()
-      ).ccipRouterAddressBase,
-      evm2EvmMessage_addKey,
-    );
+    try {
+      await routeMessage(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipRouterAddressBase,
+        evm2EvmMessage_addKey,
+      );
+    } catch (e) {
+      console.log('evm2EvmMessage_addKey Error : ', e);
+    }
 
     const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
-    expect(aliceKey_BASE.key).to.equal(aliceKeyHash);
+    expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
+    console.log('Alice key is matching');
 
     /**
      */
