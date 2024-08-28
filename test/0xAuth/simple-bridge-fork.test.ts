@@ -1,8 +1,8 @@
-const {
+import {
   getEvm2EvmMessage,
   requestLinkFromTheFaucet,
   routeMessage,
-} = require('./helper-CCIPLocalSimulator.js');
+} from '@chainlink/local/scripts/CCIPLocalSimulatorFork';
 
 import { node_url, accounts, addForkConfiguration } from '../../utils/network';
 import { ethers, network } from 'hardhat';
