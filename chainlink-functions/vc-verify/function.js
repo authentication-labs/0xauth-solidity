@@ -1,13 +1,18 @@
-// import zkpld from '@zkp-ld/jsonld-proofs';
-// Load circuit
-const jsonld = (await import('npm:jsonld')).default;
+const GATEWAY = args[0];
 
-const zkpld = (await import('http://localhost:3000/index.js')).default;
+const DEPS_CID = 'QmSXHUAiDquwrqFQdWmQ2UesWqDjBawEFEhkbt771z4Sns';
+const CIRCUITS_CID = 'Qmf6egtuwoTQ78QH2PtpJwrMdcp3MqdfdpxLP8SvQFM5bz';
+
+const mainDep = await import(`${GATEWAY}/${DEPS_CID}/index.js`);
+const zkpld = mainDep.default;
+const jsonld = mainDep.jsonld;
+
 const lessThanPrvPub64 = (
-  await import('http://localhost:3000/less_than_prv_pub_64.json', {
+  await import(`${GATEWAY}/${CIRCUITS_CID}/less_than_prv_pub_64.json`, {
     with: { type: 'json' },
   })
 ).default;
+
 const vp = (
   await import('http://localhost:3000/vp.json', { with: { type: 'json' } })
 ).default;
@@ -17,7 +22,7 @@ const kp = (
     with: { type: 'json' },
   })
 ).default;
-console.log('ID:', lessThanPrvPub64.id);
+
 try {
   const date = new Date();
   console.log('Verifying');
@@ -30,20 +35,12 @@ try {
       ],
     ]),
   });
-  console.log('Verified!', Date.now() - date.getTime());
+  if (!r.verified) throw new Error(r.error);
+  console.log('Verified in', Date.now() - date.getTime(), 'ms');
   console.log(r);
+
+  return Functions.encodeUint256(1);
 } catch (er) {
   console.log(er);
+  return Functions.encodeUint256(0);
 }
-// const circuit = await import(
-//   'https://ipfs.io/ipfs/Qmf6egtuwoTQ78QH2PtpJwrMdcp3MqdfdpxLP8SvQFM5bz/less_than_eq_prv_prv_64.json',
-//   {
-//     with: { type: 'json' },
-//   }
-// );
-
-// console.log(zkpld.default);
-// console.log(circuit.default.id);
-// console.log(await zkpld.keyGen());
-Deno.exit(0);
-// return Functions.encodeString(circuit.default.id);
