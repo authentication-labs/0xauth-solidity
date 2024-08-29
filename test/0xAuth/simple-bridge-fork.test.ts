@@ -130,6 +130,43 @@ describe('Bridge Fork Test', function () {
     console.log('-> Step : Identity ARB: Add Claim');
     /// TODO : Add claim
 
+    const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+    const claimIssuer = await ClaimIssuer.connect(claimIssuerWallet).deploy(claimIssuerWallet.address, identityFactory.getAddress());
+    console.log('ClaimIssuer Address:', await claimIssuer.getAddress());
+
+    let claim = {
+      identity: await identity.getAddress(),
+      issuer: await claimIssuer.getAddress(),
+      topic: 42,
+      scheme: 1,
+      data: '0x0042',
+      signature: '',
+      uri: 'https://example.com',
+    };
+
+    claim.signature = await claimIssuerWallet.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [claim.identity, claim.topic, claim.data]))));
+
+    const tx_addClaim = await identity.connect(aliceWallet).addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
+
+
+    const receipt_addClaim = await tx_addClaim.wait();
+
+
+    const claimAddedEvent = receipt_addClaim?.logs
+    let claimId;
+    // Assuming the event log is at index 0 (replace with appropriate index if necessary)
+    if (claimAddedEvent && claimAddedEvent.length > 0) {
+      const eventLog = claimAddedEvent[0];
+      claimId = eventLog.args[0]
+
+    } else {
+      console.log('No ClaimAdded event found in the receipt');
+    }
+    console.log('Claim ID ARB:', claimId);
+
+    const evm2EvmMessage_addClaim = await getEvm2EvmMessage(receipt_addClaim);
+
     await SETUP_NETWORK('BASE', BASE);
 
     ({ BRIDGE_CONTRACT_BASE, GATEWAY_BASE, identityFactory_BASE } =
@@ -179,6 +216,41 @@ describe('Bridge Fork Test', function () {
     const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
     expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
     console.log('Alice key is matching');
+
+
+    const aliceClaim_BASE2 = await identity_twin.getClaim(claimId);
+    console.log(' Claim aliceClaim_BASE2:', aliceClaim_BASE2);
+    console.log("evm2EvmMessage_addClaim", evm2EvmMessage_addClaim)
+    if (!evm2EvmMessage_addClaim) return;
+    try {
+      await routeMessage(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipRouterAddressBase,
+        evm2EvmMessage_addClaim,
+      );
+    } catch (e) {
+      console.log('evm2EvmMessage_addClaim Error : ', e);
+    }
+    const aliceClaim_BASE = await identity_twin.getClaim(claimId);
+    console.log(' Claim BASE:', aliceClaim_BASE);
+    // Format the retrieved claim to match our initial claim object format
+    const formattedClaim = {
+      topic: aliceClaim_BASE[0],
+      scheme: aliceClaim_BASE[1],
+      issuer: aliceClaim_BASE[2],
+      signature: aliceClaim_BASE[3],
+      data: aliceClaim_BASE[4],
+      uri: aliceClaim_BASE[5]
+    };
+
+    // Verify each component of the retrieved claim matches the original claim
+    expect(formattedClaim.topic).to.equal(claim.topic);
+    expect(formattedClaim.scheme).to.equal(claim.scheme);
+    expect(formattedClaim.issuer).to.equal(claim.issuer);
+    expect(formattedClaim.signature).to.equal(claim.signature);
+    expect(formattedClaim.data).to.equal(claim.data);
+    expect(formattedClaim.uri).to.equal(claim.uri);
 
     /**
      */
