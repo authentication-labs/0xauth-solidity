@@ -1,4 +1,5 @@
 const { simulateScript } = require('@chainlink/functions-toolkit');
+const { randomBytes } = require('crypto');
 const fs = require('fs');
 
 simulateScript({
@@ -7,7 +8,7 @@ simulateScript({
   numAllowedQueries: 1000,
   maxMemoryUsageMb: 10000,
   maxQueryResponseBytes: 1000000,
-  args: ['https://gateway.pinata.cloud/ipfs'],
+  args: [Buffer.from(randomBytes(8)).toString('base64url')],
 })
   .then((r) => {
     console.log(r);
