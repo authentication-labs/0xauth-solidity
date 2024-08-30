@@ -85,6 +85,14 @@ const config: HardhatUserConfig = {
       url: node_url('sepolia'),
       accounts: accounts('sepolia'),
     },
+    ami: {
+      url: node_url('ami'),
+      accounts: accounts('ami'),
+    },
+    op_sepi: {
+      url: node_url('op_sepi'),
+      accounts: accounts('op_sepi'),
+    },
     kovan: {
       url: node_url('kovan'),
       accounts: accounts('kovan'),

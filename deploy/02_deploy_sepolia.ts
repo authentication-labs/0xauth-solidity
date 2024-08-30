@@ -12,8 +12,8 @@ const deployContracts: DeployFunction = async function (
 
 async function _deploy(hre: HardhatRuntimeEnvironment) {
 
-    const BRIDGE_CONTRACT_AMOY_address = `0xeBDADdd5E94b6392530e32eB69f51C6630DB91eE`;
-    const GATEWAY_AMOY_address = `0xd523D678566cC472Fe0AcA5BB64427a115336f7C`;
+    const BRIDGE_CONTRACT_AMOY_address = `0x165D91e666BBa8968066c078D790189018230ce1`;
+    const GATEWAY_AMOY_address = `0x0837698110E7832b734Cd016459D340B1177ea05`;
     
 
   console.log('Deploying contracts...');
@@ -65,6 +65,25 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   });
 
   console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+
+  const claimIssuer = await deploy('ClaimIssuer', {
+    from: deployerWallet,
+    args: [claimIssuerWallet, factory.address],
+    log: true,
+    autoMine: true,
+  });
+
+
+  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
+
+  const gateway = await deploy('Gateway', {
+    from: deployerWallet,
+    args: [factory.address, [deployerWallet]],
+    log: true,
+  });
+
+  console.log(`Deployed Gateway at ${gateway.address}`);
+
 
   // Get the contract instance of ImplementationAuthority
   const instance_implementationAuthority = await ethers.getContractAt(
@@ -140,24 +159,11 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     ),
   );
 
-  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 1);
+  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 3);
   const receipt_addKey = await tx_addKey.wait();
   const aliceKey = await instance_identity.getKey(aliceKeyHash);
   console.log('aliceKey : ', aliceKey);
 
-
-  const gateway = await deploy('Gateway', {
-    from: deployerWallet,
-    args: [factory.address, [deployerWallet]],
-    log: true,
-  });
-
-  const claimIssuer = await deploy('ClaimIssuer', {
-    from: deployerWallet,
-    args: [claimIssuerWallet, factory.address],
-    log: true,
-    autoMine: true,
-  });
 
   console.log(
     `Deployed Identity implementation at ${identityImplementation.address}`,
@@ -167,8 +173,6 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     `Deployed Implementation Authority at ${implementationAuthority.address}`,
   );
   console.log(`Deployed Factory at ${factory.address}`);
-  console.log(`Deployed Gateway at ${gateway.address}`);
-  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
 }
 async function SETUP_NETWORK(_network: string, rpc: string) {
   if (_network.toUpperCase() === 'OP_SEPOLIA') {

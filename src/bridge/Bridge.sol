@@ -97,8 +97,9 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     bytes memory data,
     string memory uri
   ) external onlyAllowedSender {
-    bytes memory payload = abi.encode('AddClaim', identity, topic, scheme, issuer, signature, data, uri);
-    _sendMessage(destinationChainSelector, receiver, payload);
+    bytes memory _payload = abi.encode(msg.sender, identity, topic, scheme, issuer, signature, data, uri);
+    bytes memory metaPayload = abi.encode('AddClaim', _payload);
+    _sendMessage(destinationChainSelector, receiver, metaPayload);
   }
 
   function sendRemoveClaim(
@@ -166,15 +167,16 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     // Decode the message data
     (string memory action, bytes memory _payload) = abi.decode(message.data, (string, bytes));
     if (keccak256(bytes(action)) == keccak256(bytes('AddClaim'))) {
-      //   (
-      //     uint256 topic,
-      //     uint256 scheme,
-      //     address issuer,
-      //     bytes memory signature,
-      //     bytes memory decodedData,
-      //     string memory uri
-      //   ) = abi.decode(data, (uint256, uint256, address, bytes, bytes, string));
-      //   IIdentity(targetContract).addClaim(topic, scheme, issuer, signature, decodedData, uri);
+        (
+          address targetIdentity,
+          uint256 topic,
+          uint256 scheme,
+          address issuer,
+          bytes memory signature,
+          bytes memory decodedData,
+          string memory uri
+        ) = abi.decode(_payload, (address, uint256, uint256, address, bytes, bytes, string));
+        IIdentity(targetIdentity).addClaim(topic, scheme, issuer, signature, decodedData, uri);
       // } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveClaim'))) {
       //   bytes32 claimId = abi.decode(data, (bytes32));
       //   IIdentity(targetContract).removeClaim(claimId);
