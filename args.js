@@ -1,0 +1,8 @@
+module.exports = [
+    "0x3B91DE49FC68C9a5B08Ba1d767735F38fa1860bb",
+    false,
+    "0xA8910Bf0985Ce34585586C558fffAFD3029cFDb6"
+  ];
+
+
+//   "0x3B91DE49FC68C9a5B08Ba1d767735F38fa1860bb" false "0xA8910Bf0985Ce34585586C558fffAFD3029cFDb6" --show-stack-traces

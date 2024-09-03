@@ -55,6 +55,7 @@ async function deploy_fixture_AMOY(
 
   const deployerSigner = await ethers.getSigner(deployerWallet);
 
+  console.log('newDeployerWallet nonce : ', await deployerSigner.getNonce());
   const aliceWalletSigner = await ethers.getSigner(aliceWallet);
   console.log('deployerWallet address: ', deployerWallet);
   console.log('claimIssuerWallet address: ', claimIssuerWallet);

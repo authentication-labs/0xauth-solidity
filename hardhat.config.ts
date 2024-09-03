@@ -6,6 +6,7 @@ import '@nomicfoundation/hardhat-ethers';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
+import '@nomiclabs/hardhat-etherscan';
 
 import 'hardhat-deploy';
 import 'hardhat-deploy-ethers';
@@ -85,13 +86,13 @@ const config: HardhatUserConfig = {
       url: node_url('sepolia'),
       accounts: accounts('sepolia'),
     },
-    ami: {
-      url: node_url('ami'),
-      accounts: accounts('ami'),
+    amii: {
+      url: node_url('amii'),
+      accounts: accounts('amii'),
     },
-    op_sepi: {
-      url: node_url('op_sepi'),
-      accounts: accounts('op_sepi'),
+    op_sepy: {
+      url: node_url('op_sepy'),
+      accounts: accounts('op_sepy'),
     },
     kovan: {
       url: node_url('kovan'),
@@ -102,6 +103,34 @@ const config: HardhatUserConfig = {
       accounts: accounts('goerli'),
     },
   }),
+  etherscan: {
+    apiKey: 'YNJMAXVSKQV8NM8B7XTFW3BRPCUZX6YXPD', // Your Etherscan API key
+    customChains: [
+      {
+        network: 'op_sepy',
+        chainId: 11155420,
+        urls: {
+          apiURL: 'https://api-sepolia-optimism.etherscan.io/api',
+          browserURL: 'https://sepolia-optimism.etherscan.io',
+        },
+      },
+    ],
+  },
+  // etherscan: {
+  //   apiKey: {
+  //     amii: 'WWRR69411YUGCK7ZP3NQE95RSHSDBPHP5C',
+  //   },
+  //   customChains: [
+  //     {
+  //       network: "amii",
+  //       chainId: 80002,
+  //       urls: {
+  //         apiURL: "https://api-amoy.polygonscan.com/api",
+  //         browserURL: "https://amoy.polygonscan.com"
+  //       },
+  //     }
+  //   ]
+  // },
   paths: {
     sources: 'src',
   },
@@ -117,13 +146,13 @@ const config: HardhatUserConfig = {
   },
   external: process.env.HARDHAT_FORK
     ? {
-        deployments: {
-          // process.env.HARDHAT_FORK will specify the network that the fork is made from.
-          // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
-          hardhat: ['deployments/' + process.env.HARDHAT_FORK],
-          localhost: ['deployments/' + process.env.HARDHAT_FORK],
-        },
-      }
+      deployments: {
+        // process.env.HARDHAT_FORK will specify the network that the fork is made from.
+        // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
+        hardhat: ['deployments/' + process.env.HARDHAT_FORK],
+        localhost: ['deployments/' + process.env.HARDHAT_FORK],
+      },
+    }
     : undefined,
 
   tenderly: {

@@ -137,7 +137,7 @@ describe('Bridge Fork Test', function () {
 
     let claim = {
       identity: await identity.getAddress(),
-      issuer: await claimIssuer.getAddress(),
+      issuer: await identity.getAddress(),
       topic: 42,
       scheme: 1,
       data: '0x0042',
@@ -145,15 +145,22 @@ describe('Bridge Fork Test', function () {
       uri: 'https://example.com',
     };
 
-    claim.signature = await claimIssuerWallet.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [claim.identity, claim.topic, claim.data]))));
+    const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'uint'], // Specify the types
+      [claim.issuer, claim.topic]      // Provide the values
+    );
+    console.log('encodedData', ethers.keccak256(encodedData));
+
+    claim.signature = await claimIssuerWallet.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [davidWallet.address, claim.topic, claim.data]))));
 
     const tx_addClaim = await identity.connect(aliceWallet).addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
 
-
+    // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
     const receipt_addClaim = await tx_addClaim.wait();
 
 
     const claimAddedEvent = receipt_addClaim?.logs
+    console.log("claimAddedEvent", claimAddedEvent)
     let claimId;
     // Assuming the event log is at index 0 (replace with appropriate index if necessary)
     if (claimAddedEvent && claimAddedEvent.length > 0) {
@@ -212,11 +219,11 @@ describe('Bridge Fork Test', function () {
     } catch (e) {
       console.log('evm2EvmMessage_addKey Error : ', e);
     }
-
     const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
     expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
     console.log('Alice key is matching');
 
+    console.log("claimId", claimId)
 
     const aliceClaim_BASE2 = await identity_twin.getClaim(claimId);
     console.log(' Claim aliceClaim_BASE2:', aliceClaim_BASE2);

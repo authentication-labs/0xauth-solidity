@@ -20,9 +20,10 @@ export async function deployFactoryFixture() {
   await implementationAuthority.waitForDeployment();
 
   const IdentityFactory = await ethers.getContractFactory('IdFactory');
+
   const identityFactory = await IdentityFactory.connect(deployerWallet).deploy(
-    await implementationAuthority.getAddress(),
-    // NOTICE : Change it to false where isHomeChain should be false
+    deployerWallet.address,
+    await implementationAuthority.getAddress(),   
     true,
   );
   await identityFactory.waitForDeployment();
@@ -31,8 +32,8 @@ export async function deployFactoryFixture() {
   const identityFactory_2 = await IdentityFactory_2.connect(
     deployerWallet,
   ).deploy(
+    deployerWallet.address,
     await implementationAuthority.getAddress(),
-    // NOTICE : Change it to false where isHomeChain should be false
     false,
   );
   await identityFactory_2.waitForDeployment();
