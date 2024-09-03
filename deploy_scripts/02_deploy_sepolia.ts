@@ -32,137 +32,137 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   console.log("nonce", await deployerSigner.getNonce());
 
 
-  // const implementationAuthority = await deploy('ImplementationAuthority', {
-  //   from: deployerWallet,
-  //   args: [],
-  //   log: true,
-  // });
+  const implementationAuthority = await deploy('ImplementationAuthority', {
+    from: deployerWallet,
+    args: [],
+    log: true,
+  });
 
-  // console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
-  // console.log('implementationAuthority op sepolia : ', implementationAuthority.address);
+  console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+  console.log('implementationAuthority op sepolia : ', implementationAuthority.address);
 
-  // const bridge = await deploy('CrossChainBridge', {
-  //   from: deployerWallet,
-  //   args: [(
-  //     await CONTRACT_CONFIG()
-  //   ).ccipRouterAddressOP_SEPOLIA],
-  //   log: true,
-  // });
+  const bridge = await deploy('CrossChainBridge', {
+    from: deployerWallet,
+    args: [(
+      await CONTRACT_CONFIG()
+    ).ccipRouterAddressOP_SEPOLIA],
+    log: true,
+  });
   
-  // console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+  console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
 
-  // const factory = await deploy('IdFactory', {
-  //   from: deployerWallet,
-  //   args: [deployerWallet, implementationAuthority.address, true],
-  //   log: true,
-  // });
-  // console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+  const factory = await deploy('IdFactory', {
+    from: deployerWallet,
+    args: [deployerWallet, implementationAuthority.address, true],
+    log: true,
+  });
+  console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
 
-  // const identityImplementation = await deploy('Identity', {
-  //   from: deployerWallet,
-  //   args: [deployerWallet, false, factory.address],
-  //   log: true,
-  // });
+  const identityImplementation = await deploy('Identity', {
+    from: deployerWallet,
+    args: [deployerWallet, false, factory.address],
+    log: true,
+  });
 
-  // console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+  console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
 
-  // const claimIssuer = await deploy('ClaimIssuer', {
-  //   from: deployerWallet,
-  //   args: [claimIssuerWallet, factory.address],
-  //   log: true,
-  //   autoMine: true,
-  // });
-
-
-  // console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
-
-  // const gateway = await deploy('Gateway', {
-  //   from: deployerWallet,
-  //   args: [factory.address, [deployerWallet]],
-  //   log: true,
-  // });
-
-  // console.log(`Deployed Gateway at ${gateway.address}`);
+  const claimIssuer = await deploy('ClaimIssuer', {
+    from: deployerWallet,
+    args: [claimIssuerWallet, factory.address],
+    log: true,
+    autoMine: true,
+  });
 
 
-  // // Get the contract instance of ImplementationAuthority
-  // const instance_implementationAuthority = await ethers.getContractAt(
-  //   'ImplementationAuthority',
-  //   implementationAuthority.address,
-  //   deployerSigner, // Use deployer's signer
-  // );
+  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
 
-  // // Call updateImplementation on ImplementationAuthority
-  // const tx_updateImplementation =
-  //   await instance_implementationAuthority.updateImplementation(
-  //     identityImplementation.address,
-  //   );
-  // await tx_updateImplementation.wait();
+  const gateway = await deploy('Gateway', {
+    from: deployerWallet,
+    args: [factory.address, [deployerWallet]],
+    log: true,
+  });
+
+  console.log(`Deployed Gateway at ${gateway.address}`);
 
 
   // Get the contract instance of ImplementationAuthority
-  // const instance_factory = await ethers.getContractAt(
-  //   'IdFactory',
-  //   factory.address,
-  //   deployerSigner, // Use deployer's signer
-  // );
+  const instance_implementationAuthority = await ethers.getContractAt(
+    'ImplementationAuthority',
+    implementationAuthority.address,
+    deployerSigner, // Use deployer's signer
+  );
 
-  // await instance_factory.setBridge(bridge.address);
-
-  // await instance_factory.addReceiver((
-  //   await CONTRACT_CONFIG()
-  // ).ccipChainSelectorAMOY, BRIDGE_CONTRACT_AMOY_address, GATEWAY_AMOY_address);
-
-  // const instance_bridge = await ethers.getContractAt(
-  //   'CrossChainBridge',
-  //   bridge.address,
-  //   deployerSigner, // Use deployer's signer
-  // );
-
-  // await instance_bridge.setAllowedContract(factory.address, true);
-  // await instance_bridge.setFactoryAddress(factory.address);
-
-  // console.log('-> Step : Bridge OP_SEPOLIA: Fund bridge');
+  // Call updateImplementation on ImplementationAuthority
+  const tx_updateImplementation =
+    await instance_implementationAuthority.updateImplementation(
+      identityImplementation.address,
+    );
+  await tx_updateImplementation.wait();
 
 
-  // await deployerSigner.sendTransaction({
-  //   to: bridge.address,
-  //   value: ethers.parseEther('0.1'),
-  // })
+  Get the contract instance of ImplementationAuthority
+  const instance_factory = await ethers.getContractAt(
+    'IdFactory',
+    factory.address,
+    deployerSigner, // Use deployer's signer
+  );
 
-  // console.log('-> Step : ID factory OP_SEPOLIA: Create identity');
+  await instance_factory.setBridge(bridge.address);
 
-  // const tx_createIdentity = await instance_factory.createIdentity(bobWallet, 'saqlt1');
-  // await tx_createIdentity.wait();
+  await instance_factory.addReceiver((
+    await CONTRACT_CONFIG()
+  ).ccipChainSelectorAMOY, BRIDGE_CONTRACT_AMOY_address, GATEWAY_AMOY_address);
+
+  const instance_bridge = await ethers.getContractAt(
+    'CrossChainBridge',
+    bridge.address,
+    deployerSigner, // Use deployer's signer
+  );
+
+  await instance_bridge.setAllowedContract(factory.address, true);
+  await instance_bridge.setFactoryAddress(factory.address);
+
+  console.log('-> Step : Bridge OP_SEPOLIA: Fund bridge');
+
+
+  await deployerSigner.sendTransaction({
+    to: bridge.address,
+    value: ethers.parseEther('0.1'),
+  })
+
+  console.log('-> Step : ID factory OP_SEPOLIA: Create identity');
+
+  const tx_createIdentity = await instance_factory.createIdentity(bobWallet, 'saqlt1');
+  await tx_createIdentity.wait();
   
 
-  // const tx_createIdentityalice = await instance_factory.createIdentity(aliceWallet, 'alicesalt1');
-  // await tx_createIdentityalice.wait();
+  const tx_createIdentityalice = await instance_factory.createIdentity(aliceWallet, 'alicesalt1');
+  await tx_createIdentityalice.wait();
 
   
-  // console.log('Identity ALICE OP_SEPOLIA Address:', await instance_factory.getIdentity(aliceWallet));
+  console.log('Identity ALICE OP_SEPOLIA Address:', await instance_factory.getIdentity(aliceWallet));
 
 
   const instance_identity = await ethers.getContractAt(
     'Identity',
-    '0x2B0251FC7497CCEF48ecc564274d511F59Dc8074',
+    await instance_factory.getIdentity(bobWallet),
     bobWalletSigner,
   )
-  // console.log('Identity BOB OP_SEPOLIA Address:', await instance_factory.getIdentity(bobWallet));
+  console.log('Identity BOB OP_SEPOLIA Address:', await instance_factory.getIdentity(bobWallet));
 
 
-  // console.log('-> Step : Identity OP_SEPOLIA: Add key');
-  // const aliceKeyHash = ethers.keccak256(
-  //   ethers.AbiCoder.defaultAbiCoder().encode(
-  //     ['address'],
-  //     [aliceWallet],
-  //   ),
-  // );
+  console.log('-> Step : Identity OP_SEPOLIA: Add key');
+  const aliceKeyHash = ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address'],
+      [aliceWallet],
+    ),
+  );
 
-  // const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 3);
-  // const receipt_addKey = await tx_addKey.wait();
-  // const aliceKey = await instance_identity.getKey(aliceKeyHash);
-  // console.log('aliceKey : ', aliceKey);
+  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 3);
+  const receipt_addKey = await tx_addKey.wait();
+  const aliceKey = await instance_identity.getKey(aliceKeyHash);
+  console.log('aliceKey : ', aliceKey);
 
 
   let claim = {
@@ -212,40 +212,14 @@ if (claimAddedEvent && claimAddedEvent.length > 0) {
   console.log('No ClaimAdded events found in the receipt');
 }
 
+  console.log(
+    `Deployed Identity implementation at ${identityImplementation.address}`,
+  );
 
-// const claimAddedEventreceipt_addKey = receipt_addKey?.logs
-// console.log("claimAddedEvent", claimAddedEventreceipt_addKey)
-// // let claimId;
-
-// if (claimAddedEventreceipt_addKey && claimAddedEventreceipt_addKey.length > 0) {
-// console.log("All claimAddedEventreceipt_addKey events:");
-
-// claimAddedEventreceipt_addKey.forEach((eventLog, index) => {
-//   // Assuming the event you are interested in is at a specific index, adjust if needed
-//   // Check if the eventLog is indeed the ClaimAdded event
-//   console.log(`Event ${index + 1}:`, eventLog);
-  
-//   // If you are specifically looking for `claimId` and it is in the event arguments
-//   if (eventLog.args && eventLog.args.length > 0) {
-//     // const claimId = eventLog.args[0];
-//     console.log(`Claim ID from Event ${index + 1}:`);
-//   } else {
-//     console.log(`No claimId found in Event ${index + 1}`);
-//   }
-// });
-// } else {
-// console.log('No ClaimAdded events found in the receipt');
-// }
-
-
-//   console.log(
-//     `Deployed Identity implementation at ${identityImplementation.address}`,
-//   );
-
-//   console.log(
-//     `Deployed Implementation Authority at ${implementationAuthority.address}`,
-//   );
-//   console.log(`Deployed Factory at ${factory.address}`);
+  console.log(
+    `Deployed Implementation Authority at ${implementationAuthority.address}`,
+  );
+  console.log(`Deployed Factory at ${factory.address}`);
 }
 async function SETUP_NETWORK(_network: string, rpc: string) {
   if (_network.toUpperCase() === 'OP_SEPOLIA') {

@@ -33,7 +33,7 @@ function correctMetadata(metadata) {
     return correctedMetadata;
 }
 async function verifyContract(contract, address) {
-    const apiKey = process.env.POLYGONSCAN_APIKEY;
+    const apiKey = env.POLYGONSCAN_APIKEY;
     const sourceCode = JSON.parse(contract.metadata);
     const constructorArgs = contract.args || [];
     const abiInterface = new ethers_1.ethers.Interface(contract.abi);

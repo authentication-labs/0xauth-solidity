@@ -86,13 +86,9 @@ const config: HardhatUserConfig = {
       url: node_url('sepolia'),
       accounts: accounts('sepolia'),
     },
-    amii: {
-      url: node_url('amii'),
-      accounts: accounts('amii'),
-    },
-    op_sepy: {
-      url: node_url('op_sepy'),
-      accounts: accounts('op_sepy'),
+    op_sepolia: {
+      url: node_url('op_sepolia'),
+      accounts: accounts('op_sepolia'),
     },
     kovan: {
       url: node_url('kovan'),
@@ -103,34 +99,6 @@ const config: HardhatUserConfig = {
       accounts: accounts('goerli'),
     },
   }),
-  etherscan: {
-    apiKey: 'YNJMAXVSKQV8NM8B7XTFW3BRPCUZX6YXPD', // Your Etherscan API key
-    customChains: [
-      {
-        network: 'op_sepy',
-        chainId: 11155420,
-        urls: {
-          apiURL: 'https://api-sepolia-optimism.etherscan.io/api',
-          browserURL: 'https://sepolia-optimism.etherscan.io',
-        },
-      },
-    ],
-  },
-  // etherscan: {
-  //   apiKey: {
-  //     amii: 'WWRR69411YUGCK7ZP3NQE95RSHSDBPHP5C',
-  //   },
-  //   customChains: [
-  //     {
-  //       network: "amii",
-  //       chainId: 80002,
-  //       urls: {
-  //         apiURL: "https://api-amoy.polygonscan.com/api",
-  //         browserURL: "https://amoy.polygonscan.com"
-  //       },
-  //     }
-  //   ]
-  // },
   paths: {
     sources: 'src',
   },
