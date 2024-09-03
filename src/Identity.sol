@@ -375,17 +375,15 @@ contract Identity is Storage, IIdentity, Version {
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
-      // Get Destination Chain Selectors and their receivers
+      // Get Destination Chain Selectors andand their receivers
       address[] memory receivers = idFactory.getReceivers();
       uint64[] memory chainSelectors = idFactory.getChainSelectors();
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
           bridge.sendAddClaim(
             chainSelectors[i],
             receivers[i],
-            address(this),
             _topic,
             _scheme,
             _issuer,
@@ -395,7 +393,6 @@ contract Identity is Storage, IIdentity, Version {
           );
         }
       }
-    }
 
     return claimId;
   }

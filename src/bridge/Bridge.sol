@@ -38,7 +38,7 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     MANAGER
   }
 
-  modifier onlyAllowedSender() {
+  modifier onlyAllowedSender {
     require(
       isAllowedContract[msg.sender] == true || isManager[msg.sender] == true,
       'Permissions: Sender is not a allowed'
@@ -89,16 +89,16 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   function sendAddClaim(
     uint64 destinationChainSelector,
     address receiver,
-    address identity,
     uint256 topic,
     uint256 scheme,
     address issuer,
     bytes memory signature,
     bytes memory data,
     string memory uri
-  ) external onlyAllowedSender {
-    bytes memory payload = abi.encode('AddClaim', identity, topic, scheme, issuer, signature, data, uri);
-    _sendMessage(destinationChainSelector, receiver, payload);
+  ) external onlyAllowedIdentity(msg.sender) {
+    bytes memory _payload = abi.encode(msg.sender, topic, scheme, issuer, signature, data, uri);
+    bytes memory metaPayload = abi.encode('AddClaim', _payload);
+    _sendMessage(destinationChainSelector, receiver, metaPayload);
   }
 
   function sendRemoveClaim(
@@ -106,7 +106,7 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     address receiver,
     address identity,
     bytes32 claimId
-  ) external onlyAllowedSender {
+  ) external onlyAllowedIdentity(msg.sender) {
     bytes memory payload = abi.encode('RemoveClaim', identity, claimId);
     _sendMessage(destinationChainSelector, receiver, payload);
   }
@@ -129,7 +129,7 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
     address identity,
     bytes32 key,
     uint256 purpose
-  ) external onlyAllowedSender {
+  ) external onlyAllowedIdentity(msg.sender) {
     bytes memory payload = abi.encode('RemoveKey', identity, key, purpose);
     _sendMessage(destinationChainSelector, receiver, payload);
   }

@@ -149,7 +149,8 @@ describe('Bridge Fork Test', function () {
       ['address', 'uint'], // Specify the types
       [claim.issuer, claim.topic]      // Provide the values
     );
-    console.log('encodedData', ethers.keccak256(encodedData));
+    const claimId = ethers.keccak256(encodedData)
+    console.log('encodedData', claimId);
 
     claim.signature = await claimIssuerWallet.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [davidWallet.address, claim.topic, claim.data]))));
 
@@ -160,17 +161,6 @@ describe('Bridge Fork Test', function () {
 
 
     const claimAddedEvent = receipt_addClaim?.logs
-    console.log("claimAddedEvent", claimAddedEvent)
-    let claimId;
-    // Assuming the event log is at index 0 (replace with appropriate index if necessary)
-    if (claimAddedEvent && claimAddedEvent.length > 0) {
-      const eventLog = claimAddedEvent[0];
-      claimId = eventLog.args[0]
-
-    } else {
-      console.log('No ClaimAdded event found in the receipt');
-    }
-    console.log('Claim ID ARB:', claimId);
 
     const evm2EvmMessage_addClaim = await getEvm2EvmMessage(receipt_addClaim);
 
@@ -223,11 +213,6 @@ describe('Bridge Fork Test', function () {
     expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
     console.log('Alice key is matching');
 
-    console.log("claimId", claimId)
-
-    const aliceClaim_BASE2 = await identity_twin.getClaim(claimId);
-    console.log(' Claim aliceClaim_BASE2:', aliceClaim_BASE2);
-    console.log("evm2EvmMessage_addClaim", evm2EvmMessage_addClaim)
     if (!evm2EvmMessage_addClaim) return;
     try {
       await routeMessage(
@@ -239,6 +224,11 @@ describe('Bridge Fork Test', function () {
     } catch (e) {
       console.log('evm2EvmMessage_addClaim Error : ', e);
     }
+
+    const aliceClaim_BASE2 = await identity_twin.getClaim(claimId);
+    // console.log(' Claim aliceClaim_BASE2:', aliceClaim_BASE2);
+    // console.log("evm2EvmMessage_addClaim", evm2EvmMessage_addClaim)
+
     const aliceClaim_BASE = await identity_twin.getClaim(claimId);
     console.log(' Claim BASE:', aliceClaim_BASE);
     // Format the retrieved claim to match our initial claim object format
@@ -258,7 +248,7 @@ describe('Bridge Fork Test', function () {
     expect(formattedClaim.signature).to.equal(claim.signature);
     expect(formattedClaim.data).to.equal(claim.data);
     expect(formattedClaim.uri).to.equal(claim.uri);
-
+    console.log("AddClaim passed")
     /**
      */
   });
