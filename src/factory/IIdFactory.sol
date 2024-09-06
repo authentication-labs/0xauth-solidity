@@ -4,6 +4,19 @@ pragma solidity 0.8.17;
 interface IIdFactory {
   /// events
 
+	// AddedKey to notify everyone when key added without listening to long list of identity addresses
+	event AddedKey(address user, bytes32 indexed key, uint256 indexed purpose, uint256 indexed keyType);
+
+	// AddedClaim to notify everyone when claim0x5119478394F78463CF6aBb254982f89D480DA2A6 added without listening to long list of identity addresses
+	event AddedClaim(
+    address indexed user,
+		uint256 indexed topic,
+		uint256 scheme,
+		address indexed issuer,
+		bytes signature,
+		bytes data,
+		string uri
+	);
   // event emitted whenever a single contract is deployed by the factory
   event Deployed(address indexed _addr);
 
@@ -203,4 +216,21 @@ interface IIdFactory {
    * @dev getter for the created Identites
    */
   function identityIsCreated(address identity) external view returns (bool);
+
+  function addedKey(
+    bool _isTrue,
+    bytes32 _key,
+    uint256 _purpose,
+    uint256 _type
+    ) external;
+
+    function addedClaim(
+    bool _isTrue,
+    uint256 _topic,
+    uint256 _scheme,
+    address _issuer,
+    bytes memory _signature,
+    bytes memory _data,
+    string memory _uri
+    ) external;
 }

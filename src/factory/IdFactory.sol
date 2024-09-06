@@ -22,6 +22,7 @@ contract IdFactory is IIdFactory, Ownable {
 
   // ONCHAINID of the wallet owner
   mapping(address => address) private _userIdentity;
+  mapping(address => address) private _identityWallet;
 
   // wallets currently linked to an ONCHAINID
   mapping(address => address[]) private _wallets;
@@ -124,6 +125,7 @@ contract IdFactory is IIdFactory, Ownable {
     identity = _deployIdentity(_salt, _implementationAuthority, _wallet);
     _saltTaken[_salt] = true;
     _userIdentity[_wallet] = identity;
+    _identityWallet[identity] = _wallet;
     _wallets[identity].push(_wallet);
     emit WalletLinked(_wallet, identity);
 
@@ -150,7 +152,13 @@ contract IdFactory is IIdFactory, Ownable {
     require(_userIdentity[_wallet] == address(0), 'wallet already linked to an identity');
     require(_managementKeys.length > 0, 'invalid argument - empty list of keys');
 
-    address identity = _deployIdentity(oidSalt, _implementationAuthority, _wallet);
+    address identity = _deployIdentity(oidSalt, _implementationAuthority, address(this));
+
+    _saltTaken[oidSalt] = true;
+    _userIdentity[_wallet] = identity;
+    _identityWallet[identity] = _wallet;
+    _wallets[identity].push(_wallet);
+    isCreatedIdentity[identity] = true;
 
     for (uint i = 0; i < _managementKeys.length; i++) {
       require(
@@ -162,9 +170,9 @@ contract IdFactory is IIdFactory, Ownable {
 
     IERC734(identity).removeKey(keccak256(abi.encode(address(this))), 1);
 
-    _saltTaken[oidSalt] = true;
-    _userIdentity[_wallet] = identity;
-    _wallets[identity].push(_wallet);
+    if (_isHomeChain == true) {
+      _bridgeCreateIdentity(_wallet, _salt, _managementKeys);
+    }
     emit WalletLinked(_wallet, identity);
 
     return identity;
@@ -299,7 +307,7 @@ contract IdFactory is IIdFactory, Ownable {
   /**
    *  @dev See {IdFactory-getIdentity}.
    */
-  function getIdentity(address _wallet) external view override returns (address) {
+  function getIdentity(address _wallet) public view override returns (address) {
     if (_tokenIdentity[_wallet] != address(0)) {
       return _tokenIdentity[_wallet];
     } else {
@@ -427,5 +435,36 @@ contract IdFactory is IIdFactory, Ownable {
 
   function identityIsCreated(address _identity) external view returns (bool) {
     return isCreatedIdentity[_identity];
+  }
+
+  function addedKey(
+    bool isTrue,
+    bytes32 _key,
+    uint256 _purpose,
+    uint256 _type
+    ) public {
+      
+    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
+    emit AddedKey(_identityWallet[msg.sender], _key, _purpose, _type);
+    IERC734(msg.sender).isComingFromIdentity(false);
+
+  }
+
+    function addedClaim(
+    bool isTrue,
+    uint256 _topic,
+    uint256 _scheme,
+    address _issuer,
+    bytes memory _signature,
+    bytes memory _data,
+    string memory _uri
+    ) public {
+    
+    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
+    emit AddedClaim(_identityWallet[msg.sender],_topic, _scheme, _issuer, _signature, _data, _uri);
+    IERC734(msg.sender).isComingFromIdentity(false);
+
   }
 }

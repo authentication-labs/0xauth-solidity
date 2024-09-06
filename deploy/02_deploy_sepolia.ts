@@ -12,8 +12,8 @@ const deployContracts: DeployFunction = async function (
 
 async function _deploy(hre: HardhatRuntimeEnvironment) {
 
-    const BRIDGE_CONTRACT_AMOY_address = `0x88d8e96C61a4E56B56A28895b732dcf091fa2B3b`;
-    const GATEWAY_AMOY_address = `0x4E87e20E1d473f8B3dd1A3E6358C18C197Ec4efC`;
+    const BRIDGE_CONTRACT_AMOY_address = `0x6bf574fE78dc43b6e8E88eF860fE176185EE81Cd`;
+    const GATEWAY_AMOY_address = `0x6ed284b4d57CD82C3B1D05A2d2DF2AEE032C78af`;
     
 
   console.log('Deploying contracts...');
@@ -100,7 +100,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   await tx_updateImplementation.wait();
 
 
-  Get the contract instance of ImplementationAuthority
+  // Get the contract instance of ImplementationAuthority
   const instance_factory = await ethers.getContractAt(
     'IdFactory',
     factory.address,
@@ -136,11 +136,11 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   await tx_createIdentity.wait();
   
 
-  const tx_createIdentityalice = await instance_factory.createIdentity(aliceWallet, 'alicesalt1');
-  await tx_createIdentityalice.wait();
+  // const tx_createIdentityalice = await instance_factory.createIdentity(aliceWallet, 'alicesalt1');
+  // await tx_createIdentityalice.wait();
 
   
-  console.log('Identity ALICE OP_SEPOLIA Address:', await instance_factory.getIdentity(aliceWallet));
+  // console.log('Identity ALICE OP_SEPOLIA Address:', await instance_factory.getIdentity(aliceWallet));
 
 
   const instance_identity = await ethers.getContractAt(
@@ -189,29 +189,40 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const receipt_addClaim = await tx_addClaim.wait();
 
   const claimAddedEvent = receipt_addClaim?.logs
-  console.log("claimAddedEvent", claimAddedEvent)
+  console.log("receipt_addClaim", receipt_addClaim)
   let claimId;
   
-if (claimAddedEvent && claimAddedEvent.length > 0) {
-  console.log("All ClaimAdded events:");
+// if (claimAddedEvent && claimAddedEvent.length > 0) {
+//   console.log("All ClaimAdded events:");
 
-  claimAddedEvent.forEach((eventLog, index) => {
-    // Assuming the event you are interested in is at a specific index, adjust if needed
-    // Check if the eventLog is indeed the ClaimAdded event
-    console.log(`Event ${index + 1}:`, eventLog);
+//   claimAddedEvent.forEach((eventLog, index) => {
+//     // Assuming the event you are interested in is at a specific index, adjust if needed
+//     // Check if the eventLog is indeed the ClaimAdded event
+//     console.log(`Event ${index + 1}:`, eventLog);
     
-    // If you are specifically looking for `claimId` and it is in the event arguments
-    if (eventLog.args && eventLog.args.length > 0) {
-      const claimId = eventLog.args[0];
-      console.log(`Claim ID from Event ${index + 1}:`, claimId);
-    } else {
-      console.log(`No claimId found in Event ${index + 1}`);
-    }
-  });
-} else {
-  console.log('No ClaimAdded events found in the receipt');
-}
+//     // If you are specifically looking for `claimId` and it is in the event arguments
+//     if (eventLog.args && eventLog.args.length > 0) {
+//       const claimId = eventLog.args[0];
+//       console.log(`Claim ID from Event ${index + 1}:`, claimId);
+//     } else {
+//       console.log(`No claimId found in Event ${index + 1}`);
+//     }
+//   });
+// } else {
+//   console.log('No ClaimAdded events found in the receipt');
+// }
 
+console.log("calling tx_createIdentityWithManagementKeys")
+const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, 'aliceWalletsaqlt1',[
+  ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address'],
+      [deployerWallet],
+    ),
+  ),
+]);
+const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
+console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
   console.log(
     `Deployed Identity implementation at ${identityImplementation.address}`,
   );
