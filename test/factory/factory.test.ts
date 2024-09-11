@@ -14,7 +14,7 @@ describe('IdFactory', () => {
 
     const IdFactory = await ethers.getContractFactory('IdFactory');
     await expect(
-      IdFactory.connect(deployerWallet).deploy(ethers.ZeroAddress, true),
+      IdFactory.connect(deployerWallet).deploy(deployerWallet.address,ethers.ZeroAddress, true),
     ).to.be.revertedWith('invalid argument - zero address');
   });
 

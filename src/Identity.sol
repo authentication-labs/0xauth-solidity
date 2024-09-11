@@ -62,7 +62,7 @@ contract Identity is Storage, IIdentity, Version {
     } else {
       _initialized = true;
     }
-
+    userWallet = initialManagementKey;
     idFactory = IdFactory(idFactoryAddress);
   }
 
@@ -153,6 +153,13 @@ contract Identity is Storage, IIdentity, Version {
     return _claimsByTopic[_topic];
   }
 
+  function isComingFromIdentity(bool done) public returns (bool) {
+    if (msg.sender == address(idFactory) && done == false) {
+      isComing = false;
+    }
+    return isComing;
+  }
+
   /**
    * @notice implementation of the addKey function of the ERC-734 standard
    * Adds a _key to the identity. The _purpose specifies the purpose of key. Initially we propose four purposes:
@@ -190,8 +197,15 @@ contract Identity is Storage, IIdentity, Version {
     }
 
     _keysByPurpose[_purpose].push(_key);
-
+    
     emit KeyAdded(_key, _purpose, _type);
+    isComing = true;
+    idFactory.addedKey(
+    isComing,
+    _key,
+     _purpose,
+     _type
+     );
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
@@ -368,6 +382,8 @@ contract Identity is Storage, IIdentity, Version {
     } else {
       emit ClaimChanged(claimId, _topic, _scheme, _issuer, _signature, _data, _uri);
     }
+    isComing = true;
+    idFactory.addedClaim(isComing, _topic, _scheme, _issuer, _signature, _data, _uri);
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
@@ -375,17 +391,15 @@ contract Identity is Storage, IIdentity, Version {
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
-      // Get Destination Chain Selectors and their receivers
+      // Get Destination Chain Selectors andand their receivers
       address[] memory receivers = idFactory.getReceivers();
       uint64[] memory chainSelectors = idFactory.getChainSelectors();
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
           bridge.sendAddClaim(
             chainSelectors[i],
             receivers[i],
-            address(this),
             _topic,
             _scheme,
             _issuer,
@@ -395,7 +409,6 @@ contract Identity is Storage, IIdentity, Version {
           );
         }
       }
-    }
 
     return claimId;
   }
@@ -602,7 +615,8 @@ contract Identity is Storage, IIdentity, Version {
     require(!_initialized || _isConstructor(), 'Initial key was already setup.');
     _initialized = true;
     _canInteract = true;
-
+    
+    userWallet = initialManagementKey;
     idFactory = IdFactory(_idFactoryAddress);
 
     bytes32 _key = keccak256(abi.encode(initialManagementKey));

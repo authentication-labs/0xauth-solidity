@@ -7,6 +7,10 @@ contract Storage is Structs {
 	// factory address
 	IdFactory public idFactory;
 
+	address internal userWallet;
+
+	bool internal isComing;
+
 	// nonce used by the execute/approve function
 	uint256 internal _executionNonce;
 

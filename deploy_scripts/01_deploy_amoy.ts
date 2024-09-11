@@ -51,13 +51,14 @@ async function deploy_fixture_AMOY(
 ) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
-  const { deployerWallet,aliceWallet, bobWallet } = await getNamedAccounts();
+  const { deployerWallet,claimIssuerWallet, aliceWallet, bobWallet } = await getNamedAccounts();
 
   const deployerSigner = await ethers.getSigner(deployerWallet);
 
+  console.log('newDeployerWallet nonce : ', await deployerSigner.getNonce());
   const aliceWalletSigner = await ethers.getSigner(aliceWallet);
-  console.log('newDeployerWallet : ', deployerWallet);
-  console.log('newDeployerWallet address : ', await deployerSigner.getAddress());
+  console.log('deployerWallet address: ', deployerWallet);
+  console.log('claimIssuerWallet address: ', claimIssuerWallet);
 
   const implementationAuthority = await deploy('ImplementationAuthority', {
     from: deployerWallet,
@@ -88,7 +89,7 @@ async function deploy_fixture_AMOY(
 
   console.log('identityFactory_AMOY : ', identityFactory_AMOY.address);
   console.log('newDeployerWallet nonce : ', await deployerSigner.getNonce());
-
+// ------------------------------------
   
   const identityImplementation = await deploy('Identity', {
     from: deployerWallet,
@@ -99,8 +100,15 @@ async function deploy_fixture_AMOY(
   console.log('newDeployerWallet nonce : ', await deployerSigner.getNonce());
   console.log('identityImplementation_amoy : ', identityImplementation.address);
 
+  const claimIssuer = await deploy('ClaimIssuer', {
+    from: deployerWallet,
+    args: [claimIssuerWallet, identityFactory_AMOY.address],
+    log: true,
+    autoMine: true,
+  });
 
-
+  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
+  
   const GATEWAY_AMOY = await deploy('Gateway', {
     from: deployerWallet,
     args: [identityFactory_AMOY.address, [BRIDGE_CONTRACT_AMOY.address, deployerWallet]],
@@ -109,7 +117,6 @@ async function deploy_fixture_AMOY(
 
   console.log('GATEWAY_AMOY : ', GATEWAY_AMOY.address);
   console.log('newDeployerWallet nonce : ', await deployerSigner.getNonce());
-
 
   // Get the contract instance of ImplementationAuthority
   const instance_identityImplementation = await ethers.getContractAt(

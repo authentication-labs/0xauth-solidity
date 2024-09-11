@@ -12,8 +12,8 @@ const deployContracts: DeployFunction = async function (
 
 async function _deploy(hre: HardhatRuntimeEnvironment) {
 
-    const BRIDGE_CONTRACT_AMOY_address = `0xeBDADdd5E94b6392530e32eB69f51C6630DB91eE`;
-    const GATEWAY_AMOY_address = `0xd523D678566cC472Fe0AcA5BB64427a115336f7C`;
+    const BRIDGE_CONTRACT_AMOY_address = `0x6bf574fE78dc43b6e8E88eF860fE176185EE81Cd`;
+    const GATEWAY_AMOY_address = `0x6ed284b4d57CD82C3B1D05A2d2DF2AEE032C78af`;
     
 
   console.log('Deploying contracts...');
@@ -21,7 +21,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployerWallet, claimIssuerWallet, aliceWallet, bobWallet } = await getNamedAccounts();
-
+  console.log("claimIssuerWallet",claimIssuerWallet)
   // Get the signer for the deployer's wallet
   const deployerSigner = await ethers.getSigner(deployerWallet);
   const bobWalletSigner = await ethers.getSigner(bobWallet);
@@ -65,6 +65,25 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   });
 
   console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+
+  const claimIssuer = await deploy('ClaimIssuer', {
+    from: deployerWallet,
+    args: [claimIssuerWallet, factory.address],
+    log: true,
+    autoMine: true,
+  });
+
+
+  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
+
+  const gateway = await deploy('Gateway', {
+    from: deployerWallet,
+    args: [factory.address, [deployerWallet]],
+    log: true,
+  });
+
+  console.log(`Deployed Gateway at ${gateway.address}`);
+
 
   // Get the contract instance of ImplementationAuthority
   const instance_implementationAuthority = await ethers.getContractAt(
@@ -113,7 +132,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 
   console.log('-> Step : ID factory OP_SEPOLIA: Create identity');
 
-  const tx_createIdentity = await instance_factory.createIdentity(bobWallet, 'salt1');
+  const tx_createIdentity = await instance_factory.createIdentity(bobWallet, 'saqlt1');
   await tx_createIdentity.wait();
   
 
@@ -140,25 +159,70 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     ),
   );
 
-  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 1);
+  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 3);
   const receipt_addKey = await tx_addKey.wait();
   const aliceKey = await instance_identity.getKey(aliceKeyHash);
   console.log('aliceKey : ', aliceKey);
 
 
-  const gateway = await deploy('Gateway', {
-    from: deployerWallet,
-    args: [factory.address, [deployerWallet]],
-    log: true,
-  });
+  let claim = {
+    identity: await instance_identity.getAddress(),
+    issuer: await instance_identity.getAddress(),
+    topic: 42,
+    scheme: 1,
+    data: '0x0042',
+    signature: '',
+    uri: 'https://sepolia-optimism.etherscan.io/address/0x2B0251FC7497CCEF48ecc564274d511F59Dc8074',
+  };
 
-  const claimIssuer = await deploy('ClaimIssuer', {
-    from: deployerWallet,
-    args: [claimIssuerWallet, factory.address],
-    log: true,
-    autoMine: true,
-  });
+  const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
+    ['address', 'uint'], // Specify the types
+    [claim.issuer, claim.topic]      // Provide the values
+  );
+  console.log('encodedData', ethers.keccak256(encodedData));
 
+  claim.signature = await claimIssuerWalletSigner.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [deployerWallet, claim.topic, claim.data]))));
+
+  const tx_addClaim = await instance_identity.addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
+
+  // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
+  const receipt_addClaim = await tx_addClaim.wait();
+
+  const claimAddedEvent = receipt_addClaim?.logs
+  console.log("receipt_addClaim", receipt_addClaim)
+  let claimId;
+  
+// if (claimAddedEvent && claimAddedEvent.length > 0) {
+//   console.log("All ClaimAdded events:");
+
+//   claimAddedEvent.forEach((eventLog, index) => {
+//     // Assuming the event you are interested in is at a specific index, adjust if needed
+//     // Check if the eventLog is indeed the ClaimAdded event
+//     console.log(`Event ${index + 1}:`, eventLog);
+    
+//     // If you are specifically looking for `claimId` and it is in the event arguments
+//     if (eventLog.args && eventLog.args.length > 0) {
+//       const claimId = eventLog.args[0];
+//       console.log(`Claim ID from Event ${index + 1}:`, claimId);
+//     } else {
+//       console.log(`No claimId found in Event ${index + 1}`);
+//     }
+//   });
+// } else {
+//   console.log('No ClaimAdded events found in the receipt');
+// }
+
+console.log("calling tx_createIdentityWithManagementKeys")
+const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, 'aliceWalletsaqlt1',[
+  ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address'],
+      [deployerWallet],
+    ),
+  ),
+]);
+const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
+console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
   console.log(
     `Deployed Identity implementation at ${identityImplementation.address}`,
   );
@@ -167,8 +231,6 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     `Deployed Implementation Authority at ${implementationAuthority.address}`,
   );
   console.log(`Deployed Factory at ${factory.address}`);
-  console.log(`Deployed Gateway at ${gateway.address}`);
-  console.log(`Deployed ClaimIssuer at ${claimIssuer.address}`);
 }
 async function SETUP_NETWORK(_network: string, rpc: string) {
   if (_network.toUpperCase() === 'OP_SEPOLIA') {
