@@ -58,7 +58,7 @@ contract Identity is Storage, IIdentity, Version {
     require(initialManagementKey != address(0), 'invalid argument - zero address');
 
     if (!_isLibrary) {
-      __Identity_init(initialManagementKey);
+      __Identity_init(initialManagementKey, idFactoryAddress);
     } else {
       _initialized = true;
     }
@@ -71,9 +71,9 @@ contract Identity is Storage, IIdentity, Version {
    *
    * @param initialManagementKey The ethereum address to be set as the management key of the ONCHAINID.
    */
-  function initialize(address initialManagementKey) external {
+  function initialize(address initialManagementKey, address _idFactoryAddress) external {
     require(initialManagementKey != address(0), 'invalid argument - zero address');
-    __Identity_init(initialManagementKey);
+    __Identity_init(initialManagementKey, _idFactoryAddress);
   }
 
   /**
@@ -205,11 +205,9 @@ contract Identity is Storage, IIdentity, Version {
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
-          bridge.sendAddKey(chainSelectors[i], receivers[i], address(this), _key, _purpose, _type);
-        }
+        bridge.sendAddKey(chainSelectors[i], receivers[i], _key, _purpose, _type);
       }
-    }
+    } else {}
 
     return true;
   }
@@ -600,10 +598,12 @@ contract Identity is Storage, IIdentity, Version {
    * @param initialManagementKey The ethereum address to be set as the management key of the ONCHAINID.
    */
   // solhint-disable-next-line func-name-mixedcase
-  function __Identity_init(address initialManagementKey) internal {
+  function __Identity_init(address initialManagementKey, address _idFactoryAddress) internal {
     require(!_initialized || _isConstructor(), 'Initial key was already setup.');
     _initialized = true;
     _canInteract = true;
+
+    idFactory = IdFactory(_idFactoryAddress);
 
     bytes32 _key = keccak256(abi.encode(initialManagementKey));
     _keys[_key].key = _key;

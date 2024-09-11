@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
@@ -16,5 +16,6 @@
     "./test",
     "typechain/**/*",
     "typechain-types/**/*",
-  ]
+     "custom.d.ts"
+, "deploy_scripts/001_deploy_factory.ts", "deploy_scripts/002_deploy_claim_issuer.ts", "deploy_scripts/003_deploy_identity.ts", "deploy_scripts/004_deploy_bridge.ts"  ]
 }

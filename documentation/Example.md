@@ -1,4 +1,0 @@
-- https://ccip.chain.link/msg/0x75356f79830f5618e8f0b74df85b22fcca05d120ab9992d73ef2c3a1b3523156
-- https://github.com/smartcontractkit/chainlink-local/tree/main
-- https://docs.chain.link/ccip/tutorials/send-arbitrary-data-receipt-acknowledgment
--
