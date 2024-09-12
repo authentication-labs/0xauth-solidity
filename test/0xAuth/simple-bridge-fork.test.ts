@@ -89,7 +89,7 @@ describe('Bridge Fork Test', function () {
 
     const tx = await identityFactory
       .connect(newDeployerWallet)
-      .createIdentity(davidWallet.address, 'salt1');
+      .createIdentityWithManagementKeys(davidWallet.address, '432s4324234234alt1', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceWallet.address])) ]);
 
     await expect(tx).to.emit(identityFactory, 'WalletLinked');
     await expect(tx).to.emit(identityFactory, 'Deployed');
@@ -114,18 +114,18 @@ describe('Bridge Fork Test', function () {
     );
 
     // David adds Alice's key
-    const tx_addKey = await identity
-      .connect(davidWallet)
-      .addKey(aliceKeyHash, 1, 1);
-    const receipt_addKey = await tx_addKey.wait();
+    // const tx_addKey = await identity
+    //   .connect(davidWallet)
+    //   .addKey(aliceKeyHash, 1, 1);
+    // const receipt_addKey = await tx_addKey.wait();
 
     const aliceKey = await identity.getKey(aliceKeyHash);
     expect(aliceKey.key).to.equal(aliceKeyHash);
 
-    if (!receipt_addKey) return;
-    const evm2EvmMessage_addKey = await getEvm2EvmMessage(receipt_addKey);
+    // if (!receipt_addKey) return;
+    // const evm2EvmMessage_addKey = await getEvm2EvmMessage(receipt_addKey);
 
-    if (!evm2EvmMessage_addKey) return;
+    // if (!evm2EvmMessage_addKey) return;
 
     console.log('-> Step : Identity ARB: Add Claim');
     /// TODO : Add claim
@@ -153,16 +153,32 @@ describe('Bridge Fork Test', function () {
     console.log('encodedData', claimId);
 
     claim.signature = await claimIssuerWallet.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [davidWallet.address, claim.topic, claim.data]))));
-
+    console.log('claim.signature', claim.signature);
     const tx_addClaim = await identity.connect(aliceWallet).addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
 
     // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
     const receipt_addClaim = await tx_addClaim.wait();
 
-
+    console.log("work")
     const claimAddedEvent = receipt_addClaim?.logs
 
     const evm2EvmMessage_addClaim = await getEvm2EvmMessage(receipt_addClaim);
+    console.log("work")
+    // const carolWalletkeyHash = ethers.keccak256(
+    //   ethers.AbiCoder.defaultAbiCoder().encode(
+    //     ['address'],
+    //     [carolWallet.address],
+    //   ),
+    // );
+    // const tx_createIdentityWithManagementKeys = await identityFactory
+    //   .connect(newDeployerWallet)
+    //   .createIdentityWithManagementKeys(aliceWallet.address, '432salt1', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [carolWallet.address])) ]);
+
+    //   const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
+
+    // console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys?.logs)
+
+    // const evm2EvmMessage_createIdentityWithManagementKeys = await getEvm2EvmMessage(receipt_tx_createIdentityWithManagementKeys);
 
     await SETUP_NETWORK('BASE', BASE);
 
@@ -198,17 +214,17 @@ describe('Bridge Fork Test', function () {
 
     console.log('Identity BASE Address:', await identity_twin.getAddress());
 
-    if (!evm2EvmMessage_addKey) return;
-    try {
-      await routeMessage(
-        (
-          await CONTRACT_CONFIG()
-        ).ccipRouterAddressBase,
-        evm2EvmMessage_addKey,
-      );
-    } catch (e) {
-      console.log('evm2EvmMessage_addKey Error : ', e);
-    }
+    // if (!evm2EvmMessage_addKey) return;
+    // try {
+    //   await routeMessage(
+    //     (
+    //       await CONTRACT_CONFIG()
+    //     ).ccipRouterAddressBase,
+    //     evm2EvmMessage_addKey,
+    //   );
+    // } catch (e) {
+    //   console.log('evm2EvmMessage_addKey Error : ', e);
+    // }
     const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
     expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
     console.log('Alice key is matching');
@@ -224,6 +240,17 @@ describe('Bridge Fork Test', function () {
     } catch (e) {
       console.log('evm2EvmMessage_addClaim Error : ', e);
     }
+    // if (!evm2EvmMessage_createIdentityWithManagementKeys) return;
+    // try {
+    //   await routeMessage(
+    //     (
+    //       await CONTRACT_CONFIG()
+    //     ).ccipRouterAddressBase,
+    //     evm2EvmMessage_createIdentityWithManagementKeys,
+    //   );
+    // } catch (e) {
+    //   console.log('evm2EvmMessage_createIdentityWithManagementKeys Error : ', e);
+    // }
 
     const aliceClaim_BASE2 = await identity_twin.getClaim(claimId);
     // console.log(' Claim aliceClaim_BASE2:', aliceClaim_BASE2);

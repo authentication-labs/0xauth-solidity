@@ -144,7 +144,7 @@ contract IdFactory is IIdFactory, Ownable {
     address _wallet,
     string memory _salt,
     bytes32[] memory _managementKeys
-  ) external override onlyOwner returns (address) {
+  ) external override onlyAllowedSender returns (address) {
     require(_wallet != address(0), 'invalid argument - zero address');
     require(keccak256(abi.encode(_salt)) != keccak256(abi.encode('')), 'invalid argument - empty string');
     string memory oidSalt = string.concat('OID', _salt);
@@ -159,7 +159,9 @@ contract IdFactory is IIdFactory, Ownable {
     _identityWallet[identity] = _wallet;
     _wallets[identity].push(_wallet);
     isCreatedIdentity[identity] = true;
-
+    if (_isHomeChain == true) {
+      _bridgeCreateIdentity(_wallet, _salt, _managementKeys);
+    }
     for (uint i = 0; i < _managementKeys.length; i++) {
       require(
         _managementKeys[i] != keccak256(abi.encode(_wallet)),
@@ -170,9 +172,6 @@ contract IdFactory is IIdFactory, Ownable {
 
     IERC734(identity).removeKey(keccak256(abi.encode(address(this))), 1);
 
-    if (_isHomeChain == true) {
-      _bridgeCreateIdentity(_wallet, _salt, _managementKeys);
-    }
     emit WalletLinked(_wallet, identity);
 
     return identity;

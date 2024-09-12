@@ -12,8 +12,8 @@ const deployContracts: DeployFunction = async function (
 
 async function _deploy(hre: HardhatRuntimeEnvironment) {
 
-    const BRIDGE_CONTRACT_AMOY_address = `0x6bf574fE78dc43b6e8E88eF860fE176185EE81Cd`;
-    const GATEWAY_AMOY_address = `0x6ed284b4d57CD82C3B1D05A2d2DF2AEE032C78af`;
+    const BRIDGE_CONTRACT_AMOY_address = `0x859CfdA0190A6cA212e807aFf7d723F23360c922`;
+    const GATEWAY_AMOY_address = `0x132d2157D1eAfb34B55262A7Cd2ae91b2d967891`;
     
 
   console.log('Deploying contracts...');
@@ -130,36 +130,32 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     value: ethers.parseEther('0.1'),
   })
 
-  console.log('-> Step : ID factory OP_SEPOLIA: Create identity');
+  console.log('-> Step : ID factory OP_SEPOLIA: Create IdentityWithManagementKeys');
 
-  const tx_createIdentity = await instance_factory.createIdentity(bobWallet, 'saqlt1');
+  console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');
+    
+  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(bobWallet, 'bobWallet', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
   await tx_createIdentity.wait();
-  
-
-  // const tx_createIdentityalice = await instance_factory.createIdentity(aliceWallet, 'alicesalt1');
-  // await tx_createIdentityalice.wait();
-
-  
-  // console.log('Identity ALICE OP_SEPOLIA Address:', await instance_factory.getIdentity(aliceWallet));
+     
+  console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(bobWallet));
 
 
   const instance_identity = await ethers.getContractAt(
     'Identity',
     await instance_factory.getIdentity(bobWallet),
-    bobWalletSigner,
-  )
-  console.log('Identity BOB OP_SEPOLIA Address:', await instance_factory.getIdentity(bobWallet));
+    deployerSigner,
+  ) 
 
 
   console.log('-> Step : Identity OP_SEPOLIA: Add key');
   const aliceKeyHash = ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
       ['address'],
-      [aliceWallet],
+      [bobWallet],
     ),
   );
 
-  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 1, 3);
+  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 3, 1);
   const receipt_addKey = await tx_addKey.wait();
   const aliceKey = await instance_identity.getKey(aliceKeyHash);
   console.log('aliceKey : ', aliceKey);
@@ -187,9 +183,9 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 
   // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
   const receipt_addClaim = await tx_addClaim.wait();
-
+ 
   const claimAddedEvent = receipt_addClaim?.logs
-  console.log("receipt_addClaim", receipt_addClaim)
+  // console.log("receipt_addClaim", receipt_addClaim)
   let claimId;
   
 // if (claimAddedEvent && claimAddedEvent.length > 0) {
@@ -212,17 +208,17 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 //   console.log('No ClaimAdded events found in the receipt');
 // }
 
-console.log("calling tx_createIdentityWithManagementKeys")
-const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, 'aliceWalletsaqlt1',[
-  ethers.keccak256(
-    ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address'],
-      [deployerWallet],
-    ),
-  ),
-]);
-const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
-console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
+// console.log("calling tx_createIdentityWithManagementKeys")
+// const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, 'aliceWalletsaqlt1',[
+//   ethers.keccak256(
+//     ethers.AbiCoder.defaultAbiCoder().encode(
+//       ['address'],
+//       [deployerWallet],
+//     ),
+//   ),
+// ]);
+// const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
+// console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
   console.log(
     `Deployed Identity implementation at ${identityImplementation.address}`,
   );
