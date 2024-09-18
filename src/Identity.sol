@@ -199,16 +199,21 @@ contract Identity is Storage, IIdentity, Version {
     _keysByPurpose[_purpose].push(_key);
     
     emit KeyAdded(_key, _purpose, _type);
-    isComing = true;
-    idFactory.addedKey(
-    isComing,
-    _key,
-     _purpose,
-     _type
-     );
+
+    // So OZ Defender doesn't initiate stellar transactions when creating Identity With Management Keys
+    if (msg.sender != address(idFactory)) {      
+      isComing = true;
+      idFactory.addedKey(
+      isComing,
+      _key,
+      _purpose,
+      _type
+      );
+    }
 
     bool isHomeChain = idFactory._isHomeChain();
-    if (isHomeChain) {
+    // Don't send message when calling via createIdentityWithManagementKeys
+    if (isHomeChain && msg.sender != address(idFactory)) {
       address bridgeAddress = idFactory.getBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
@@ -313,7 +318,8 @@ contract Identity is Storage, IIdentity, Version {
     emit KeyRemoved(_key, _purpose, keyType);
 
     bool isHomeChain = idFactory._isHomeChain();
-    if (isHomeChain) {
+    // Don't send message when calling via createIdentityWithManagementKeys
+    if (isHomeChain && msg.sender != address(idFactory)) {
       address bridgeAddress = idFactory.getBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
