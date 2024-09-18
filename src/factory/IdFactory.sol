@@ -7,10 +7,11 @@ import '../interface/IERC734.sol';
 import { CrossChainBridge } from '../bridge/Bridge.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
+import '../IAccessRegistry.sol';
 /// @notice REMOVE in prod
 import 'hardhat/console.sol';
 
-contract IdFactory is IIdFactory, Ownable {
+contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
   mapping(address => bool) private _tokenFactories;
 
   // address of the _implementationAuthority contract making the link to the implementation contract
@@ -437,21 +438,14 @@ contract IdFactory is IIdFactory, Ownable {
     return isCreatedIdentity[_identity];
   }
 
-  function addedKey(
-    bool isTrue,
-    bytes32 _key,
-    uint256 _purpose,
-    uint256 _type
-    ) public {
-      
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
-    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
+  function addedKey(bool isTrue, bytes32 _key, uint256 _purpose, uint256 _type) public {
+    require(isCreatedIdentity[msg.sender] == true, 'Invalid Identity');
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), 'Permissions: Only Identity can Call');
     emit AddedKey(_identityWallet[msg.sender], _key, _purpose, _type);
     IERC734(msg.sender).isComingFromIdentity(false);
-
   }
 
-    function addedClaim(
+  function addedClaim(
     bool isTrue,
     uint256 _topic,
     uint256 _scheme,
@@ -459,12 +453,19 @@ contract IdFactory is IIdFactory, Ownable {
     bytes memory _signature,
     bytes memory _data,
     string memory _uri
-    ) public {
-    
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
-    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
-    emit AddedClaim(_identityWallet[msg.sender],_topic, _scheme, _issuer, _signature, _data, _uri);
+  ) public {
+    require(isCreatedIdentity[msg.sender] == true, 'Invalid Identity');
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), 'Permissions: Only Identity can Call');
+    emit AddedClaim(_identityWallet[msg.sender], _topic, _scheme, _issuer, _signature, _data, _uri);
     IERC734(msg.sender).isComingFromIdentity(false);
+  }
 
+  // For fireblocks integeration
+  // from IAccessRegistry.sol
+  function hasAccess(address account, address caller, bytes calldata data) external view returns (bool) {
+    require(_userIdentity[account] != address(0), "identity doesn't exists");
+
+    // TODO: check claims
+    return true;
   }
 }
