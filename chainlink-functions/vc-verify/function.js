@@ -41,7 +41,7 @@ try {
 
   const req = await Functions.makeHttpRequest({
     url: GEN_VP_URL,
-    timeout: 10_000,
+    timeout: 15_000,
     method: 'POST',
     headers: {
       'content-type': 'application/json',

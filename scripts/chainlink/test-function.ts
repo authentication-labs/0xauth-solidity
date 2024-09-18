@@ -10,11 +10,11 @@ const {
   FulfillmentCode,
 } = require('@chainlink/functions-toolkit');
 const functionsConsumerAbi =
-  require('../deployments/op_sepolia/ProofFunction.json').abi;
+  require('../../deployments/op_sepolia/ProofFunction.json').abi;
 require('@chainlink/env-enc').config();
 
-const consumerAddress = '0x810e6511E15FBFcE17a58fE2Fd3653FDe1825329'; // REPLACE this with your Functions consumer address
-const subscriptionId = 232; // REPLACE this with your subscription ID
+const consumerAddress = '0x8C79fB384C8CE4555dEc9F505895aCeC9Ba71eBf';
+const subscriptionId = 232; //
 
 const makeRequest = async () => {
   // hardcoded for OP Sepolia
@@ -26,7 +26,10 @@ const makeRequest = async () => {
   // Initialize functions settings
   const source = fs
     .readFileSync(
-      path.resolve(__dirname, '../chainlink-functions/vc-verify/function.js'),
+      path.resolve(
+        __dirname,
+        '../../chainlink-functions/vc-verify/function.js',
+      ),
     )
     .toString();
 
