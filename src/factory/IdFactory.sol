@@ -466,4 +466,38 @@ contract IdFactory is IIdFactory, Ownable {
     IERC734(msg.sender).isComingFromIdentity(false);
 
   }
+
+
+  function removedKey(
+    bool isTrue,
+    bytes32 _key,
+    uint256 _purpose,
+    uint256 _type
+    ) public {
+      
+    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
+    emit RemovedKey(_identityWallet[msg.sender], _key, _purpose, _type);
+    IERC734(msg.sender).isComingFromIdentity(false);
+
+  }
+
+    function removedClaim(
+    bool isTrue,
+    bytes32 _claimId,
+    uint256 _topic,
+    uint256 _scheme,
+    address _issuer,
+    bytes memory _signature,
+    bytes memory _data,
+    string memory _uri
+    ) public {
+    
+    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
+    emit RemovedClaim(_identityWallet[msg.sender], _claimId,_topic, _scheme, _issuer, _signature, _data, _uri);
+    IERC734(msg.sender).isComingFromIdentity(false);
+
+  }
+
 }

@@ -103,7 +103,7 @@ const config: HardhatUserConfig = {
   //   apiKey: 'YNJMAXVSKQV8NM8B7XTFW3BRPCUZX6YXPD', // Your Etherscan API key
   //   customChains: [
   //     {
-  //       network: 'op_sepy',
+  //       network: 'op_sepolia',
   //       chainId: 11155420,
   //       urls: {
   //         apiURL: 'https://api-sepolia-optimism.etherscan.io/api',

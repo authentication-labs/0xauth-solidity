@@ -37,8 +37,8 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
  
   console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');
    
-  const testWallet = "0xE082ECFfbE1b55f81692F3b88f05d4CCB59DAa08";
-  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltedevm14', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
+  const testWallet = "0x5031fB25B5d524965d2ad4490d67702d495d507a";
+  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd13fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
   await tx_createIdentity.wait();
      
   console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(testWallet));
@@ -89,78 +89,5 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const receipt_addClaim = await tx_addClaim.wait();
  
 }
-async function SETUP_NETWORK(_network: string, rpc: string) {
-  if (_network.toUpperCase() === 'OP_SEPOLIA') {
-    console.log('\n---------------------OP_SEPOLIA----------------------');
-
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: rpc
-          },
-        },
-      ],
-    });
-  }
-
-  if (_network.toUpperCase() === 'AMOY') {
-    console.log('\n---------------------AMOY----------------------');
-
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: rpc
-          },
-        },
-      ],
-    });
-  }
-}
-
-async function CONTRACT_CONFIG() {
-  const ccipRouterAddressOP_SEPOLIA = `0x114A20A10b43D4115e5aeef7345a1A71d2a60C57`;
-  const ccipRouterAddressAMOY = `0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2`;
-  const ccipChainSelectorAMOY = 16281711391670634445n;
-
-
-  // const ccipRouterAddressArbSepolia = `0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165`;
-  // const ccipRouterAddressBase = `0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93`;
-  // const ccipChainSelectorBase = 10344971235874465080n;
-
-  const Bridge_Factory = await ethers.getContractFactory('CrossChainBridge');
-  const ImplementationAuthority_Factory = await ethers.getContractFactory(
-    'ImplementationAuthority',
-  );
-
-  const IdFactory_Factory = await ethers.getContractFactory('IdFactory');
-  const Identity_Factory = await ethers.getContractFactory('Identity');
-  const Gateway_Factory = await ethers.getContractFactory('Gateway');
-
-  // Return the constants and factories
-  return {
-    ccipRouterAddressOP_SEPOLIA,
-    ccipRouterAddressAMOY,
-    ccipChainSelectorAMOY,
-    Bridge_Factory,
-    ImplementationAuthority_Factory,
-    IdFactory_Factory,
-    Identity_Factory,
-    Gateway_Factory,
-  };
-}
- 
-
-
 
 export default deployContracts;
-deployContracts.tags = [
-  'IdFactory',
-  'ImplementationAuthority',
-  'Identity',
-  'Gateway',
-  'ClaimIssuer',
-];
