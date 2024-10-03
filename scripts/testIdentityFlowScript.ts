@@ -31,14 +31,14 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   // Get the contract instance of ImplementationAuthority
   const instance_factory = await ethers.getContractAt(
     'IdFactory',
-    '0x5728B9736E1784cB7086A871fAb27a7CD8FC9042',
+    '0xF96E3e5a3949A3015AE5026d29fE12f98a95a4b7',
     deployerSigner, // Use deployer's signer
   );
- 
-  console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');
-   
-  const testWallet = "0x5031fB25B5d524965d2ad4490d67702d495d507a";
-  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd13fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
+  const testWallet = "0x34Be555065c984e4fb75d37D0b623F3388c7772b";
+
+
+  console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');   
+  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd15fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
   await tx_createIdentity.wait();
      
   console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(testWallet));
@@ -51,18 +51,18 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   ) 
 
 
-  console.log('-> Step : Identity OP_SEPOLIA: Add key');
+  // console.log('-> Step : Identity OP_SEPOLIA: Add key');
   const aliceKeyHash = ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
       ['address'],
-      [bobWallet],
+      [aliceWallet],
     ),
   );
 
-  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 3, 1);
+  const tx_addKey = await instance_identity.addKey(aliceKeyHash, 2, 1);
   const receipt_addKey = await tx_addKey.wait();
   const aliceKey = await instance_identity.getKey(aliceKeyHash);
-  console.log('aliceKey : ', aliceKey);
+  console.log('aliceKey : ', await instance_identity.getKey(aliceKeyHash));
 
 
   let claim = {
@@ -79,15 +79,27 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     ['address', 'uint'], // Specify the types
     [claim.issuer, claim.topic]      // Provide the values
   );
-  console.log('encodedData', ethers.keccak256(encodedData));
+  // console.log('encodedData', ethers.keccak256(encodedData));
 
+  let claimID = ethers.keccak256(encodedData)
   claim.signature = await claimIssuerWalletSigner.signMessage(ethers.getBytes(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [deployerWallet, claim.topic, claim.data]))));
 
   const tx_addClaim = await instance_identity.addClaim(claim.topic, claim.scheme, claim.issuer, claim.signature, claim.data, claim.uri);
 
   // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
   const receipt_addClaim = await tx_addClaim.wait();
- 
+
+  console.log("Removing Claim")
+  const tx_removeClaim = await instance_identity.removeClaim(claimID);
+  const receipt_removeClaim = await tx_removeClaim.wait();
+  console.log("Claim Removed")
+
+
+  console.log("Removing Key")
+  const tx_removeKey = await instance_identity.removeKey(aliceKeyHash, 2);
+  const receipttx_removeKey= await tx_removeKey.wait();
+  console.log("Key Removed")
+
 }
 
 export default deployContracts;

@@ -22,10 +22,10 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
  
   const instance_bridge = await ethers.getContractAt(
     'CrossChainBridge',
-    '0x96889e7f741Eb2C472C5caA3034BCaA3564A87d3',
+    '0x859CfdA0190A6cA212e807aFf7d723F23360c922',
     deployerSigner, // Use deployer's signer
   );
-  await instance_bridge.withdraw('0xF1a4690f60bC124B208a2d36d21F3CD877547443', ethers.parseEther('0.097832062485298766'));
+  await instance_bridge.withdraw('0x6D571882684d4d34733F204a4612613D666250EC', ethers.parseEther('0.095800884908145111'));
  
 } 
 async function CONTRACT_CONFIG() {
