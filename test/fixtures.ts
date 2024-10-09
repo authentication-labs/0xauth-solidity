@@ -24,7 +24,7 @@ export async function deployFactoryFixture() {
   const identityFactory = await IdentityFactory.connect(deployerWallet).deploy(
     deployerWallet.address,
     await implementationAuthority.getAddress(),   
-    true,
+    false,
   );
   await identityFactory.waitForDeployment();
 
@@ -42,7 +42,7 @@ export async function deployFactoryFixture() {
   const identityImplementation = await Identity.connect(deployerWallet).deploy(
     deployerWallet.address,
     // NOTICE : Change it to true if contract isLibrary
-    false,
+    true,
     identityFactory.getAddress(),
   );
   await identityImplementation.waitForDeployment();

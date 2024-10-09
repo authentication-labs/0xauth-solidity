@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { deployIdentityFixture } from './fixtures';
+import { ZeroAddress } from 'ethers';
 
 describe('Proxy', () => {
   it('should revert because implementation is Zero address', async () => {
@@ -12,46 +13,44 @@ describe('Proxy', () => {
       IdentityProxy.connect(deployerWallet).deploy(
         ethers.ZeroAddress,
         identityOwnerWallet.address,
+        ethers.ZeroAddress,
       ),
     ).to.be.revertedWith('invalid argument - zero address');
   });
 
   it('should revert because implementation is not an identity', async () => {
     const [deployerWallet, identityOwnerWallet] = await ethers.getSigners();
+    const { identityFactory } = await loadFixture(
+      deployIdentityFixture,
+    );
 
     const claimIssuer = await ethers.deployContract('Test');
 
     claimIssuer.waitForDeployment();
 
-    const authority = await ethers.deployContract('ImplementationAuthority', [
-      await claimIssuer.getAddress(),
-    ]);
+    const authority = await ethers.deployContract('ImplementationAuthority', []);
 
     const IdentityProxy = await ethers.getContractFactory('IdentityProxy');
     await expect(
       IdentityProxy.connect(deployerWallet).deploy(
         await authority.getAddress(),
         identityOwnerWallet.address,
+        ethers.ZeroAddress,
       ),
     ).to.be.revertedWith('Initialization failed.');
   });
 
   it('should revert because initial key is Zero address', async () => {
     const [deployerWallet] = await ethers.getSigners();
-
-    const implementation = await ethers.deployContract('Identity', [
-      deployerWallet.address,
-      true,
-    ]);
-    const implementationAuthority = await ethers.deployContract(
-      'ImplementationAuthority',
-      [await implementation.getAddress()],
+    const { implementationAuthority } = await loadFixture(
+      deployIdentityFixture,
     );
 
     const IdentityProxy = await ethers.getContractFactory('IdentityProxy');
     await expect(
       IdentityProxy.connect(deployerWallet).deploy(
         await implementationAuthority.getAddress(),
+        ethers.ZeroAddress,
         ethers.ZeroAddress,
       ),
     ).to.be.revertedWith('invalid argument - zero address');
@@ -93,26 +92,15 @@ describe('Proxy', () => {
 
   it('should update the implementation address', async () => {
     const [deployerWallet] = await ethers.getSigners();
-
-    const implementation = await ethers.deployContract('Identity', [
-      deployerWallet.address,
-      true,
-    ]);
-    const implementationAuthority = await ethers.deployContract(
-      'ImplementationAuthority',
-      [await implementation.getAddress()],
+    const { implementationAuthority, identityImplementation } = await loadFixture(
+      deployIdentityFixture,
     );
-
-    const newImplementation = await ethers.deployContract('Identity', [
-      deployerWallet.address,
-      true,
-    ]);
-
+    
     const tx = await implementationAuthority
       .connect(deployerWallet)
-      .updateImplementation(await newImplementation.getAddress());
+      .updateImplementation(await identityImplementation.getAddress());
     await expect(tx)
       .to.emit(implementationAuthority, 'UpdatedImplementation')
-      .withArgs(await newImplementation.getAddress());
+      .withArgs(await identityImplementation.getAddress());
   });
 });

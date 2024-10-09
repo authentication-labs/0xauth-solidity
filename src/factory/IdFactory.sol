@@ -443,7 +443,7 @@ contract IdFactory is IIdFactory, Ownable {
     uint256 _type
     ) public {
       
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    // require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
     require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
     emit AddedKey(_identityWallet[msg.sender], _key, _purpose, _type);
     IERC734(msg.sender).isComingFromIdentity(false);
@@ -460,7 +460,7 @@ contract IdFactory is IIdFactory, Ownable {
     string memory _uri
     ) public {
     
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    // require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
     require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
     emit AddedClaim(_identityWallet[msg.sender],_topic, _scheme, _issuer, _signature, _data, _uri);
     IERC734(msg.sender).isComingFromIdentity(false);
@@ -475,7 +475,7 @@ contract IdFactory is IIdFactory, Ownable {
     uint256 _type
     ) public {
       
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    // require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
     require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
     emit RemovedKey(_identityWallet[msg.sender], _key, _purpose, _type);
     IERC734(msg.sender).isComingFromIdentity(false);
@@ -493,7 +493,7 @@ contract IdFactory is IIdFactory, Ownable {
     string memory _uri
     ) public {
     
-    require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
+    // require(isCreatedIdentity[msg.sender]== true, "Invalid Identity");
     require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), "Permissions: Only Identity can Call");
     emit RemovedClaim(_identityWallet[msg.sender], _claimId,_topic, _scheme, _issuer, _signature, _data, _uri);
     IERC734(msg.sender).isComingFromIdentity(false);

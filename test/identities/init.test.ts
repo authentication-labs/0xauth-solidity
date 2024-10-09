@@ -6,17 +6,17 @@ import { deployIdentityFixture } from '../fixtures';
 
 describe('Identity', () => {
   it('should revert when attempting to initialize an already deployed identity', async () => {
-    const { aliceIdentity, aliceWallet } = await loadFixture(
+    const { aliceIdentity, aliceWallet, identityFactory } = await loadFixture(
       deployIdentityFixture,
     );
 
     await expect(
-      aliceIdentity.connect(aliceWallet).initialize(aliceWallet.address),
+      aliceIdentity.connect(aliceWallet).initialize(aliceWallet.getAddress(), identityFactory.getAddress()),
     ).to.be.revertedWith('Initial key was already setup.');
   });
 
   it('should revert because interaction with library is forbidden', async () => {
-    const { identityImplementation, aliceWallet, deployerWallet } =
+    const { identityImplementation, aliceWallet, deployerWallet, identityFactory } =
       await loadFixture(deployIdentityFixture);
 
     await expect(
@@ -37,7 +37,7 @@ describe('Identity', () => {
     await expect(
       identityImplementation
         .connect(aliceWallet)
-        .initialize(deployerWallet.address),
+        .initialize(deployerWallet.address, identityFactory.getAddress()),
     ).to.be.revertedWith('Initial key was already setup.');
   });
 
