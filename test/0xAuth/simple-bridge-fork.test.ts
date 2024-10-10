@@ -16,8 +16,8 @@ import { Wallet } from 'ethers';
 describe('Bridge Fork Test', function () {
   console.log('Starting Test');
   before(async () => {
-    const BASE = node_url('BASE_SEPOLIA'); // Archive node
-    const ARB = node_url('ARB_SEPOLIA'); // Archive node
+    const BASE = node_url('BNB'); // Archive node
+    const ARB = node_url('AMOY'); // Archive node
 
     const [
       _0xAuthFundingWallet,
@@ -365,8 +365,7 @@ async function SETUP_NETWORK(_network: string, rpc: string) {
       params: [
         {
           forking: {
-            jsonRpcUrl: rpc,
-            blockNumber: 72349573,
+            jsonRpcUrl: rpc
           },
         },
       ],
@@ -381,8 +380,7 @@ async function SETUP_NETWORK(_network: string, rpc: string) {
       params: [
         {
           forking: {
-            jsonRpcUrl: rpc,
-            blockNumber: 14161630,
+            jsonRpcUrl: rpc
           },
         },
       ],
@@ -391,9 +389,9 @@ async function SETUP_NETWORK(_network: string, rpc: string) {
 }
 
 async function CONTRACT_CONFIG() {
-  const ccipRouterAddressArbSepolia = `0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165`;
-  const ccipRouterAddressBase = `0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93`;
-  const ccipChainSelectorBase = 10344971235874465080n;
+  const ccipRouterAddressArbSepolia = `0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2`;
+  const ccipRouterAddressBase = `0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59`;
+  const ccipChainSelectorBase = 16015286601757825753n;
 
   const Bridge_Factory = await ethers.getContractFactory('CrossChainBridge');
   const ImplementationAuthority_Factory = await ethers.getContractFactory(

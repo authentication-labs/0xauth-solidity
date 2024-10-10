@@ -31,15 +31,22 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   // Get the contract instance of ImplementationAuthority
   const instance_factory = await ethers.getContractAt(
     'IdFactory',
-    '0xF96E3e5a3949A3015AE5026d29fE12f98a95a4b7',
+    '0x309bBBB5b773640a0Ee9972fD0B805b9D9dbC627',
     deployerSigner, // Use deployer's signer
   );
   const testWallet = "0x34Be555065c984e4fb75d37D0b623F3388c7772b";
 
 
   console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');   
-  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd15fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
+  try {
+    const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd15fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ], { gasLimit: 1000000 });
   await tx_createIdentity.wait();
+    
+  } catch (error) {
+    console.log('error', error);
+    throw error;
+  }
+  
      
   console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(testWallet));
 
