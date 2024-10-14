@@ -12,8 +12,8 @@ const deployContracts: DeployFunction = async function (
 
 async function _deploy(hre: HardhatRuntimeEnvironment) {
 
-    const BRIDGE_CONTRACT_AMOY_address = `0x859CfdA0190A6cA212e807aFf7d723F23360c922`;
-    const GATEWAY_AMOY_address = `0x132d2157D1eAfb34B55262A7Cd2ae91b2d967891`;
+    const BRIDGE_CONTRACT_AMOY_address = `0x5Fc5050AF707915015f3B127f8850201C060a4d6`;
+    const GATEWAY_AMOY_address = `0x764428E83357F1EaeE121b14AB87022C86D4cB65`;
     
 
   console.log('Deploying contracts...');
@@ -187,7 +187,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const claimAddedEvent = receipt_addClaim?.logs
   // console.log("receipt_addClaim", receipt_addClaim)
   let claimId;
-  
+  let claimID = ethers.keccak256(encodedData)
 // if (claimAddedEvent && claimAddedEvent.length > 0) {
 //   console.log("All ClaimAdded events:");
 
@@ -219,7 +219,21 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 // ]);
 // const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
 // console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
-  console.log(
+
+
+const tx_removeClaim = await instance_identity.removeClaim(claimID);
+
+// bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
+const receipt_removeClaim = await tx_removeClaim.wait();
+
+
+const tx_removeKey = await instance_identity.removeKey(aliceKeyHash,3);
+
+// bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
+const receipt_removeKey = await tx_removeKey.wait();
+
+
+console.log(
     `Deployed Identity implementation at ${identityImplementation.address}`,
   );
 

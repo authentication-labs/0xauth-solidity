@@ -1,5 +1,8 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { deployIdentityFixture } from '../fixtures';
+
 
 describe('Verifier', () => {
 	describe('.verify()', () => {
@@ -39,9 +42,10 @@ describe('Verifier', () => {
 			describe('when the identity does not have the claim', () => {
 				it('should return false', async () => {
 					const [deployer, aliceWallet, claimIssuerWallet] = await ethers.getSigners();
-					const verifier = await ethers.deployContract('Verifier');
-					const claimIssuer = await ethers.deployContract('ClaimIssuer', [claimIssuerWallet.address]);
-					const aliceIdentity = await ethers.deployContract('Identity', [aliceWallet.address, false]);
+					const { claimIssuer, aliceIdentity } = await loadFixture(deployIdentityFixture);
+					const Verifier = await ethers.getContractFactory('Verifier');
+					const verifier = await Verifier.connect(deployer).deploy();
+			
 					await verifier.addClaimTopic(ethers.encodeBytes32String('SOME_TOPIC'));
 					await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [
 						ethers.encodeBytes32String('SOME_TOPIC'),
@@ -54,10 +58,10 @@ describe('Verifier', () => {
 			describe('when the identity does not have a valid expected claim', () => {
 				it('should return false', async () => {
 					const [deployer, aliceWallet, claimIssuerWallet] = await ethers.getSigners();
-					const verifier = await ethers.deployContract('Verifier');
-					const claimIssuer = await ethers.deployContract('ClaimIssuer', [claimIssuerWallet.address]);
-					const aliceIdentity = await ethers.deployContract('Identity', [aliceWallet.address, false]);
-
+					const { claimIssuer, aliceIdentity } = await loadFixture(deployIdentityFixture);
+					const Verifier = await ethers.getContractFactory('Verifier');
+					const verifier = await Verifier.connect(deployer).deploy();
+			
 					await verifier.addClaimTopic(666);
 					await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [666]);
 
@@ -82,6 +86,18 @@ describe('Verifier', () => {
 						)
 					);
 					await aliceIdentity
+					.connect(aliceWallet)
+					.addKey(
+					  ethers.keccak256(
+						ethers.AbiCoder.defaultAbiCoder().encode(
+						  ['address'],
+						  [deployer.address],
+						),
+					  ),
+					  3,
+					  1,
+					);
+					await aliceIdentity
 						.connect(aliceWallet)
 						.addClaim(
 							aliceClaim666.topic,
@@ -100,10 +116,10 @@ describe('Verifier', () => {
 			describe('when the identity has the valid expected claim', () => {
 				it('should return true', async () => {
 					const [deployer, aliceWallet, claimIssuerWallet] = await ethers.getSigners();
-					const verifier = await ethers.deployContract('Verifier');
-					const claimIssuer = await ethers.deployContract('ClaimIssuer', [claimIssuerWallet.address]);
-					const aliceIdentity = await ethers.deployContract('Identity', [aliceWallet.address, false]);
-
+					const { claimIssuer, aliceIdentity } = await loadFixture(deployIdentityFixture);
+					const Verifier = await ethers.getContractFactory('Verifier');
+					const verifier = await Verifier.connect(deployer).deploy();
+			
 					await verifier.addClaimTopic(666);
 					await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [666]);
 
@@ -148,12 +164,25 @@ describe('Verifier', () => {
 				it('should return true', async () => {
 					const [deployer, aliceWallet, claimIssuerAWallet, claimIssuerBWallet, claimIssuerCWallet] =
 						await ethers.getSigners();
-					const verifier = await ethers.deployContract('Verifier');
-					const claimIssuerA = await ethers.deployContract('ClaimIssuer', [claimIssuerAWallet.address]);
-					const claimIssuerB = await ethers.deployContract('ClaimIssuer', [claimIssuerBWallet.address]);
-					const claimIssuerC = await ethers.deployContract('ClaimIssuer', [claimIssuerCWallet.address]);
-					const aliceIdentity = await ethers.deployContract('Identity', [aliceWallet.address, false]);
+					const { aliceIdentity, identityFactory } = await loadFixture(deployIdentityFixture);
+					
+					const Verifier = await ethers.getContractFactory('Verifier');
+					const verifier = await Verifier.connect(deployer).deploy();
 
+					const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+					const claimIssuerA = await ClaimIssuer.connect(claimIssuerAWallet).deploy(
+						claimIssuerAWallet.address,
+						identityFactory.getAddress(),
+					);
+					const claimIssuerB = await ClaimIssuer.connect(claimIssuerBWallet).deploy(
+						claimIssuerBWallet.address,
+						identityFactory.getAddress(),
+					);
+					const claimIssuerC = await ClaimIssuer.connect(claimIssuerCWallet).deploy(
+						claimIssuerCWallet.address,
+						identityFactory.getAddress(),
+					);
+					
 					await verifier.addClaimTopic(666);
 					await verifier.addTrustedIssuer(await claimIssuerA.getAddress(), [666]);
 					await verifier.addClaimTopic(42);
@@ -291,11 +320,22 @@ describe('Verifier', () => {
 
 			describe('when identity is not compliant', () => {
 				it('should return false', async () => {
-					const [deployer, aliceWallet, claimIssuerAWallet, claimIssuerBWallet] = await ethers.getSigners();
-					const verifier = await ethers.deployContract('Verifier');
-					const claimIssuerA = await ethers.deployContract('ClaimIssuer', [claimIssuerAWallet.address]);
-					const claimIssuerB = await ethers.deployContract('ClaimIssuer', [claimIssuerBWallet.address]);
-					const aliceIdentity = await ethers.deployContract('Identity', [aliceWallet.address, false]);
+					const [deployer, aliceWallet, claimIssuerAWallet, claimIssuerBWallet] =
+						await ethers.getSigners();
+					const { aliceIdentity, identityFactory } = await loadFixture(deployIdentityFixture);
+					
+					const Verifier = await ethers.getContractFactory('Verifier');
+					const verifier = await Verifier.connect(deployer).deploy();
+
+					const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+					const claimIssuerA = await ClaimIssuer.connect(claimIssuerAWallet).deploy(
+						claimIssuerAWallet.address,
+						identityFactory.getAddress(),
+					);
+					const claimIssuerB = await ClaimIssuer.connect(claimIssuerBWallet).deploy(
+						claimIssuerBWallet.address,
+						identityFactory.getAddress(),
+					);
 
 					await verifier.addClaimTopic(666);
 					await verifier.addTrustedIssuer(await claimIssuerA.getAddress(), [666]);
@@ -407,7 +447,8 @@ describe('Verifier', () => {
 		describe('when not called by the owner', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
 
 				await expect(verifier.connect(aliceWallet).removeClaimTopic(2)).to.be.revertedWith(
 					'Ownable: caller is not the owner'
@@ -418,7 +459,8 @@ describe('Verifier', () => {
 		describe('when called by the owner', () => {
 			it('should remove the claim topic', async () => {
 				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
 				await verifier.addClaimTopic(1);
 				await verifier.addClaimTopic(2);
 				await verifier.addClaimTopic(3);
@@ -436,9 +478,16 @@ describe('Verifier', () => {
 		describe('when not called by the owner', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
 
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(verifier.connect(aliceWallet).removeTrustedIssuer(await claimIssuer.getAddress())).to.be.revertedWith(
 					'Ownable: caller is not the owner'
 				);
@@ -448,9 +497,19 @@ describe('Verifier', () => {
 		describe('when called by the owner', () => {
 			it('should remove the trusted issuer', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
-				const claimIssuerB = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
+				const claimIssuerB = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 				await verifier.addTrustedIssuer(await claimIssuerB.getAddress(), [2]);
 
@@ -464,7 +523,8 @@ describe('Verifier', () => {
 		describe('when issuer address is zero', () => {
 			it('should revert', async () => {
 				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
 
 				await expect(verifier.removeTrustedIssuer(ethers.ZeroAddress)).to.be.revertedWith(
 					'invalid argument - zero address'
@@ -475,9 +535,14 @@ describe('Verifier', () => {
 		describe('when issuer is not trusted', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
-
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(verifier.removeTrustedIssuer(await claimIssuer.getAddress())).to.be.revertedWith(
 					'NOT a trusted issuer'
 				);
@@ -489,9 +554,14 @@ describe('Verifier', () => {
 		describe('when not called by the owner', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
-
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(
 					verifier.connect(aliceWallet).addTrustedIssuer(await claimIssuer.getAddress(), [1])
 				).to.be.revertedWith('Ownable: caller is not the owner');
@@ -500,8 +570,9 @@ describe('Verifier', () => {
 
 		describe('when issuer address is the zero', () => {
 			it('should revert', async () => {
-				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
+				const [deployer, aliceWallet] = await ethers.getSigners();
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
 
 				await expect(verifier.addTrustedIssuer(ethers.ZeroAddress, [1])).to.be.revertedWith(
 					'invalid argument - zero address'
@@ -512,8 +583,15 @@ describe('Verifier', () => {
 		describe('when issuer is already trusted', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
+				
 				await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 
 				await expect(verifier.addTrustedIssuer(await claimIssuer.getAddress(), [2])).to.be.revertedWith(
@@ -525,8 +603,9 @@ describe('Verifier', () => {
 		describe('when claim topics array is empty', () => {
 			it('should revert', async () => {
 				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				
 				await expect(verifier.addTrustedIssuer(deployer.address, [])).to.be.revertedWith(
 					'trusted claim topics cannot be empty'
 				);
@@ -536,8 +615,9 @@ describe('Verifier', () => {
 		describe('when claim topics array contains more than 15 topics', () => {
 			it('should revert', async () => {
 				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				
 				await expect(
 					verifier.addTrustedIssuer(deployer.address, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 				).to.be.revertedWith('cannot have more than 15 claim topics');
@@ -547,13 +627,23 @@ describe('Verifier', () => {
 		describe('when adding a 51th trusted issuer', () => {
 			it('should revert', async () => {
 				const [deployer] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
 				for (let i = 0; i < 50; i++) {
-					const claimIssuer = await ethers.deployContract('ClaimIssuer', [deployer.address]);
+					const claimIssuer = await ClaimIssuer.connect(deployer).deploy(
+						deployer.address,
+					  identityFactory.getAddress(),
+					);
 					await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 				}
 
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [deployer.address]);
+				const claimIssuer = await ClaimIssuer.connect(deployer).deploy(
+					deployer.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1])).to.be.revertedWith(
 					'cannot have more than 50 trusted issuers'
 				);
@@ -565,8 +655,16 @@ describe('Verifier', () => {
 		describe('when not called by the owner', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 
 				await expect(
 					verifier.connect(aliceWallet).updateIssuerClaimTopics(await claimIssuer.getAddress(), [1])
@@ -577,8 +675,16 @@ describe('Verifier', () => {
 		describe('when called by the owner', () => {
 			it('should update the issuer claim topics', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 
 				const tx = await verifier.updateIssuerClaimTopics(await claimIssuer.getAddress(), [2, 3]);
@@ -593,8 +699,11 @@ describe('Verifier', () => {
 
 		describe('when issuer address is the zero address', () => {
 			it('should revert', async () => {
-				const verifier = await ethers.deployContract('Verifier');
+				const [deployer] = await ethers.getSigners();
 
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				
 				await expect(verifier.updateIssuerClaimTopics(ethers.ZeroAddress, [1])).to.be.revertedWith(
 					'invalid argument - zero address'
 				);
@@ -604,9 +713,16 @@ describe('Verifier', () => {
 		describe('when issuer is not trusted', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
 
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(verifier.updateIssuerClaimTopics(await claimIssuer.getAddress(), [1])).to.be.revertedWith(
 					'NOT a trusted issuer'
 				);
@@ -616,8 +732,16 @@ describe('Verifier', () => {
 		describe('when list of topics contains more than 15 topics', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 
 				await expect(
@@ -632,8 +756,16 @@ describe('Verifier', () => {
 		describe('when list of topics is empty', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
+
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await verifier.addTrustedIssuer(await claimIssuer.getAddress(), [1]);
 
 				await expect(verifier.updateIssuerClaimTopics(await claimIssuer.getAddress(), [])).to.be.revertedWith(
@@ -647,9 +779,16 @@ describe('Verifier', () => {
 		describe('when issuer is not trusted', () => {
 			it('should revert', async () => {
 				const [deployer, aliceWallet] = await ethers.getSigners();
-				const verifier = await ethers.deployContract('Verifier');
-				const claimIssuer = await ethers.deployContract('ClaimIssuer', [aliceWallet.address]);
+				const { identityFactory } = await loadFixture(deployIdentityFixture);
 
+				const Verifier = await ethers.getContractFactory('Verifier');
+				const verifier = await Verifier.connect(deployer).deploy();
+				const ClaimIssuer = await ethers.getContractFactory('ClaimIssuer');
+
+				const claimIssuer = await ClaimIssuer.connect(aliceWallet).deploy(
+					aliceWallet.address,
+				  identityFactory.getAddress(),
+				);
 				await expect(verifier.getTrustedIssuerClaimTopics(await claimIssuer.getAddress())).to.be.revertedWith(
 					"trusted Issuer doesn't exist"
 				);

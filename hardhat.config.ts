@@ -109,19 +109,19 @@ const config: HardhatUserConfig = {
       accounts: accounts('goerli'),
     },
   }),
-  // etherscan: {
-  //   apiKey: 'YNJMAXVSKQV8NM8B7XTFW3BRPCUZX6YXPD', // Your Etherscan API key
-  //   customChains: [
-  //     {
-  //       network: 'op_sepy',
-  //       chainId: 11155420,
-  //       urls: {
-  //         apiURL: 'https://api-sepolia-optimism.etherscan.io/api',
-  //         browserURL: 'https://sepolia-optimism.etherscan.io',
-  //       },
-  //     },
-  //   ],
-  // },
+  etherscan: {
+    apiKey: 'YNJMAXVSKQV8NM8B7XTFW3BRPCUZX6YXPD', // Your Etherscan API key
+    customChains: [
+      {
+        network: 'op_sepolia',
+        chainId: 11155420,
+        urls: {
+          apiURL: 'https://api-sepolia-optimism.etherscan.io/api',
+          browserURL: 'https://sepolia-optimism.etherscan.io',
+        },
+      },
+    ],
+  },
   // etherscan: {
   //   apiKey: {
   //     amii: 'WWRR69411YUGCK7ZP3NQE95RSHSDBPHP5C',

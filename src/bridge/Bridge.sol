@@ -13,9 +13,6 @@ import { IIdentity } from '../interface/IIdentity.sol';
 import { Gateway } from '../gateway/Gateway.sol';
 import '../factory/IIdFactory.sol';
 
-/// @notice REmOVE in PROD
-import 'hardhat/console.sol';
-
 contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   /// @notice REMOVE for prod
   string public ccipMessage;
@@ -104,11 +101,11 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   function sendRemoveClaim(
     uint64 destinationChainSelector,
     address receiver,
-    address identity,
     bytes32 claimId
   ) external onlyAllowedIdentity(msg.sender) {
-    bytes memory payload = abi.encode('RemoveClaim', identity, claimId);
-    _sendMessage(destinationChainSelector, receiver, payload);
+    bytes memory _payload = abi.encode(msg.sender, claimId);
+    bytes memory metaPayload = abi.encode('RemoveClaim',_payload);
+    _sendMessage(destinationChainSelector, receiver, metaPayload);
   }
 
   function sendAddKey(
@@ -126,12 +123,12 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
   function sendRemoveKey(
     uint64 destinationChainSelector,
     address receiver,
-    address identity,
     bytes32 key,
     uint256 purpose
   ) external onlyAllowedIdentity(msg.sender) {
-    bytes memory payload = abi.encode('RemoveKey', identity, key, purpose);
-    _sendMessage(destinationChainSelector, receiver, payload);
+     bytes memory _payload = abi.encode(msg.sender, key, purpose);
+    bytes memory metaPayload = abi.encode('RemoveKey', _payload);
+    _sendMessage(destinationChainSelector, receiver, metaPayload);
   }
 
   function sendCreateIdentity(
@@ -176,18 +173,18 @@ contract CrossChainBridge is CCIPReceiver, ReentrancyGuard {
           string memory uri
         ) = abi.decode(_payload, (address, uint256, uint256, address, bytes, bytes, string));
         IIdentity(targetContract).addClaim(topic, scheme, issuer, signature, decodedData, uri);
-      // } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveClaim'))) {
-      //   bytes32 claimId = abi.decode(data, (bytes32));
-      //   IIdentity(targetContract).removeClaim(claimId);
+      } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveClaim'))) {
+        (address targetIdentity, bytes32 claimId) = abi.decode(_payload, (address,bytes32));
+        IIdentity(targetIdentity).removeClaim(claimId);
     } else if (keccak256(bytes(action)) == keccak256(bytes('AddKey'))) {
       (address targetIdentity, bytes32 key, uint256 purpose, uint256 keyType) = abi.decode(
         _payload,
         (address, bytes32, uint256, uint256)
       );
       IIdentity(targetIdentity).addKey(key, purpose, keyType);
-      // } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveKey'))) {
-      //   (bytes32 key, uint256 purpose) = abi.decode(data, (bytes32, uint256));
-      //   IIdentity(targetContract).removeKey(key, purpose);
+      } else if (keccak256(bytes(action)) == keccak256(bytes('RemoveKey'))) {
+        (address targetIdentity, bytes32 key, uint256 purpose) = abi.decode(_payload, (address, bytes32, uint256));
+        IIdentity(targetIdentity).removeKey(key, purpose);
     } else if (keccak256(bytes(action)) == keccak256(bytes('CreateIdentity'))) {
       (address targetContract, address identityOwner, string memory salt, bytes32[] memory managementKeys) = abi.decode(
         _payload,

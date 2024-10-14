@@ -27,7 +27,7 @@ describe('IdFactory', () => {
       identityFactory
         .connect(aliceWallet)
         .createIdentity(ethers.ZeroAddress, 'salt1'),
-    ).to.be.revertedWith('Ownable: caller is not the owner');
+    ).to.be.revertedWith('Permissions: Sender is not a allowed');
   });
 
   it('should revert because wallet of identity cannot be Zero address', async () => {

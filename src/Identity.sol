@@ -317,6 +317,17 @@ contract Identity is Storage, IIdentity, Version {
 
     emit KeyRemoved(_key, _purpose, keyType);
 
+    // So OZ Defender doesn't initiate stellar transactions when creating Identity With Management Keys
+    if (msg.sender != address(idFactory)) {      
+      isComing = true;
+      idFactory.removedKey(
+      isComing,
+      _key,
+      _purpose,
+      keyType
+      );
+    }
+
     bool isHomeChain = idFactory._isHomeChain();
     // Don't send message when calling via createIdentityWithManagementKeys
     if (isHomeChain && msg.sender != address(idFactory)) {
@@ -330,9 +341,7 @@ contract Identity is Storage, IIdentity, Version {
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
-          bridge.sendRemoveKey(chainSelectors[i], receivers[i], address(this), _key, _purpose);
-        }
+        bridge.sendRemoveKey(chainSelectors[i], receivers[i], _key, _purpose);    
       }
     }
 
@@ -461,6 +470,18 @@ contract Identity is Storage, IIdentity, Version {
 
     delete _claims[_claimId];
 
+    isComing = true;
+    idFactory.removedClaim(
+      isComing,
+      _claimId,
+      _topic,
+      _claims[_claimId].scheme,
+      _claims[_claimId].issuer,
+      _claims[_claimId].signature,
+      _claims[_claimId].data,
+      _claims[_claimId].uri
+    );
+
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
       address bridgeAddress = idFactory.getBridge();
@@ -473,9 +494,7 @@ contract Identity is Storage, IIdentity, Version {
 
       // Send message to the bridge
       for (uint i = 0; i < receivers.length; i++) {
-        if (receivers[i] != address(bridge)) {
-          bridge.sendRemoveClaim(chainSelectors[i], receivers[i], address(this), _claimId);
-        }
+        bridge.sendRemoveClaim(chainSelectors[i], receivers[i], _claimId);
       }
     }
 
