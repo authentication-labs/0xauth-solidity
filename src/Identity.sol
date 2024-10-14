@@ -211,8 +211,6 @@ contract Identity is Storage, IIdentity, Version {
       );
     }
 
-    isComing = false;
-
     bool isHomeChain = idFactory._isHomeChain();
     // Don't send message when calling via createIdentityWithManagementKeys
     if (isHomeChain && msg.sender != address(idFactory)) {
@@ -330,8 +328,6 @@ contract Identity is Storage, IIdentity, Version {
       );
     }
 
-    isComing = false;
-
     bool isHomeChain = idFactory._isHomeChain();
     // Don't send message when calling via createIdentityWithManagementKeys
     if (isHomeChain && msg.sender != address(idFactory)) {
@@ -403,7 +399,6 @@ contract Identity is Storage, IIdentity, Version {
     }
     isComing = true;
     idFactory.addedClaim(isComing, _topic, _scheme, _issuer, _signature, _data, _uri);
-    isComing = false;
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
@@ -486,7 +481,6 @@ contract Identity is Storage, IIdentity, Version {
       _claims[_claimId].data,
       _claims[_claimId].uri
     );
-    isComing = false;
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
