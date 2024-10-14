@@ -23,3 +23,6 @@ deployments/c2
 /.dapp
 
 main.js
+
+
+.DS_Store

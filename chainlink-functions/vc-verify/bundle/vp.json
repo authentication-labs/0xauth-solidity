@@ -1,0 +1,79 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/ns/data-integrity/v1",
+    "https://zkp-ld.org/context.jsonld",
+    "https://schema.org/",
+    {
+      "isPatientOf": "http://example.org/vocab/isPatientOf",
+      "lotNumber": "http://example.org/vocab/lotNumber",
+      "vaccine": {
+        "@id": "http://example.org/vocab/vaccine",
+        "@type": "@id"
+      },
+      "vaccinationDate": {
+        "@id": "http://example.org/vocab/vaccinationDate",
+        "@type": "xsd:dateTime"
+      },
+      "Vaccination": "http://example.org/vocab/Vaccination",
+      "Vaccine": "http://example.org/vocab/Vaccine"
+    }
+  ],
+  "type": "VerifiablePresentation",
+  "proof": {
+    "type": "DataIntegrityProof",
+    "created": "2024-08-18T19:56:24.790Z",
+    "challenge": "abcde",
+    "cryptosuite": "bbs-termwise-proof-2023",
+    "proofPurpose": "authentication",
+    "proofValue": "uomFhWQPiAgAAAAAAAAAAr0qKS5pvhUiXndceL2gvENBjJUE0Z7bGOeFjkLONzZ1XAMDxPXN2g-XUcoDHhvszidXsX9Q7ocgT048xZKhXjIuacvOVwENY_Y2u6NpXrqmhxBO-x1uwqxRsG9xjSFegqmsZFH7JUBHT-6lLq014milYMCCpcJwSUAhjBzi1g7xp5Zg4HkGYOaM0cPVDVDo_kuCc2-EY2P42tS0tb_brOCvDHBalwBhm3GFwTSX3MiPviPG9xMXE-0P0zIEBOHYNAgAAAAAAAABNGhgR40Rx_WN-i1ga5kt-ugj2Cm4tssFduauJ3cV8O3w0Hxuj3a3Qs9mvvc9IJmQfpaWkwE-C5ZqvlrNnOEQys_DwvKf5yofRhHxndRybkZeCCENJeVfUuhx1bTSWvo40Z0dycResywqUFhDIC_U6CQAAAAAAAADvBBA-gq3QGuhFcr8t9rBdb-dJZogKsVHUwGKZgWFICPEwQPYnjaI74JjEBSyuuzrbFOewAc2H2kNGogVEPOMg1RH2o43l8jCXaoTphdSXN4k48JE45hpWAot9RKz9kUfyvh4sd7VtqtNS66TzFZVcPS1XZvkZCQGMKPCaNe5KAINYUX-Gfk9sNnVEHhkt4xneklzv9Isd1fLFtfenG4oig1hRf4Z-T2w2dUQeGS3jGd6SXO_0ix3V8sW196cbiiKDWFF_hn5PbDZ1RB4ZLeMZ3pJc7_SLHdXyxbX3pxuKIoNYUX-Gfk9sNnVEHhkt4xneklzv9Isd1fLFtfenG4oig1hRf4Z-T2w2dUQeGS3jGd6SXO_0ix3V8sW196cbiiIGuQ66Ofy_O0pvV33ImLqZceldhLP_-OL7vObRFlkbhdS5GYO0aqxpNOgeVD5cuV26ikAg7snatDepToypiEhQj4Pd7sK7vHqeJx2x4wlKnL2C2OagB2u4NYi_jM8VCyvCEpoewDMmr7QX_R4OTThLRAe8hGedHmSTkWyMTEeAv0xOTX4fnjHDuO4tNvgDnXI2oz_EJ3IbL1Xuk2g0Ux-c2Twaf28M4jNW9T4G8hzdvTgHkZij8MoNfQwoIJGp5lqVhviQQNs7zNeOK6Z2HZ3caYlmuSLLkdLki3-OQ5zuVqQs69BRlGKOleViEOHjWgVmlJv0g270Fy1n2l8MR76QmfceuVA0y45XkAMgEOT5iuSbXgCXFJINQuJycRlXniXRAgAAAAAAAADVEfajjeXyMJdqhOmF1Jc3iTjwkTjmGlYCi31ErP2RR8Ttl_xCgHz48PVz3zsaPfmg9Gur0tcJCYVgHScXD19MAQUAAAAAAAAAYWJjZGUAAGFigaRhYYsAAQIDBAUGBwgJCmFiC2FjhQABAgMEYWQF"
+  },
+  "verifiableCredential": {
+    "id": "http://example.org/credentials/1/1",
+    "type": "VerifiableCredential",
+    "proof": {
+      "type": "DataIntegrityProof",
+      "created": "2023-01-01T00:00:00Z",
+      "cryptosuite": "bbs-termwise-signature-2023",
+      "proofPurpose": "assertionMethod",
+      "verificationMethod": "did:example:issuer0#bls12_381-g2-pub001"
+    },
+    "credentialSubject": {
+      "id": "did:example:john",
+      "type": "Person",
+      "schema:birthDate": {},
+      "familyName": "Smith",
+      "givenName": "John",
+      "homeLocation": {
+        "id": "did:example:cityA",
+        "maximumAttendeeCapacity": {
+          "id": "_:b5"
+        }
+      }
+    },
+    "expirationDate": "2026-01-01T00:00:00Z",
+    "issuanceDate": "2023-01-01T00:00:00Z",
+    "issuer": "did:example:issuer0"
+  },
+  "predicate": {
+    "type": "Predicate",
+    "circuit": "circ:lessThanPrvPub",
+    "private": [
+      {
+        "type": "PrivateVariable",
+        "val": "_:b5",
+        "var": "lesser"
+      }
+    ],
+    "public": [
+      {
+        "type": "PublicVariable",
+        "val": {
+          "type": "xsd:integer",
+          "@value": "50000"
+        },
+        "var": "greater"
+      }
+    ]
+  }
+}

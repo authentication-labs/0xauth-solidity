@@ -37,6 +37,16 @@ const config: HardhatUserConfig = {
           },
         },
       },
+      {
+        version: '0.8.20',
+        settings: {
+          viaIR: true,
+          optimizer: {
+            enabled: true,
+            runs: 2000,
+          },
+        },
+      },
     ],
   },
   namedAccounts: {
@@ -142,13 +152,13 @@ const config: HardhatUserConfig = {
   },
   external: process.env.HARDHAT_FORK
     ? {
-      deployments: {
-        // process.env.HARDHAT_FORK will specify the network that the fork is made from.
-        // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
-        hardhat: ['deployments/' + process.env.HARDHAT_FORK],
-        localhost: ['deployments/' + process.env.HARDHAT_FORK],
-      },
-    }
+        deployments: {
+          // process.env.HARDHAT_FORK will specify the network that the fork is made from.
+          // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
+          hardhat: ['deployments/' + process.env.HARDHAT_FORK],
+          localhost: ['deployments/' + process.env.HARDHAT_FORK],
+        },
+      }
     : undefined,
 
   tenderly: {
