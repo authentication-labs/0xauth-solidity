@@ -28,7 +28,6 @@ contract xAuthAccessRegistry is IAccessRegistry, Ownable {
     // require(senderIdentity != address(0), 'sender identity is null');
 
     // extract data
-    // institutionalContract[]
 
     (address recipient, uint256 amount) = abi.decode(data[4:], (address, uint256));
 
