@@ -10,7 +10,7 @@ import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 /// @notice REMOVE in prod
 import 'hardhat/console.sol';
 
-contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
+contract IdFactory is IIdFactory, Ownable {
   mapping(address => bool) private _tokenFactories;
 
   // address of the _implementationAuthority contract making the link to the implementation contract
@@ -456,14 +456,5 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     require(isTrue == IERC734(msg.sender).isComingFromIdentity(true), 'Permissions: Only Identity can Call');
     emit AddedClaim(_identityWallet[msg.sender], _topic, _scheme, _issuer, _signature, _data, _uri);
     IERC734(msg.sender).isComingFromIdentity(false);
-  }
-
-  // For fireblocks integeration
-  // from IAccessRegistry.sol
-  function hasAccess(address account, address caller, bytes calldata data) external view returns (bool) {
-    require(_userIdentity[account] != address(0), "identity doesn't exists");
-
-    // TODO: check claims
-    return true;
   }
 }
