@@ -7,7 +7,6 @@ import '../interface/IERC734.sol';
 import { CrossChainBridge } from '../bridge/Bridge.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
-import '../IAccessRegistry.sol';
 /// @notice REMOVE in prod
 import 'hardhat/console.sol';
 
