@@ -1,4 +1,5 @@
-# Boilerplate for ethereum solidity smart contract development
+# 0xAuth Solidity Contracts
+Base on boilerplate for ethereum solidity smart contract development
 
 ## INSTALL
 
