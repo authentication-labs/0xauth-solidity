@@ -12,7 +12,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await deploy('xAuthAccessRegistry', {
     from: deployerWallet,
-    args: [await idFactory.getAddress(), await claimIssuer.getAddress()],
+    // args: [await idFactory.getAddress(), await claimIssuer.getAddress()],
+    args: [
+      '0x8A0Fa067dE12a527501FA009a2806AAD3d9df630',
+      '0x6b0a61Bd492655845963044BFA70EB77FA1512a7',
+    ],
+
     log: true,
     autoMine: true,
   });

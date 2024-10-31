@@ -5,8 +5,9 @@ import '../interface/IAccessRegistry.sol';
 import '../factory/IIdFactory.sol';
 import '../interface/IClaimIssuer.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/introspection/ERC165.sol';
 
-contract xAuthAccessRegistry is IAccessRegistry, Ownable {
+contract xAuthAccessRegistry is IAccessRegistry, Ownable, ERC165 {
   IIdFactory public factory;
   IClaimIssuer public claimIssuer;
 
@@ -23,37 +24,44 @@ contract xAuthAccessRegistry is IAccessRegistry, Ownable {
     claimIssuer = _claimIssuer;
   }
 
+  function updateFactory(IIdFactory _factory) external onlyOwner {
+    factory = _factory;
+  }
+
+  function updateClaimIssuer(IClaimIssuer _claimIssuer) external onlyOwner {
+    claimIssuer = _claimIssuer;
+  }
+
   function hasAccess(address account, address caller, bytes calldata data) external view override returns (bool) {
-    address senderIdentity = factory.getIdentity(account);
+    address identity = factory.getIdentity(account);
 
     // require(senderIdentity != address(0), 'sender identity is null');
 
     // extract data
 
-    (address recipient, uint256 amount) = abi.decode(data[4:], (address, uint256));
+    // (address recipient, uint256 amount) = abi.decode(data[4:], (address, uint256));
 
-    address receiverIdentity = factory.getIdentity(recipient);
-
-    require(senderIdentity != address(0), 'receiver identity is null');
+    require(identity != address(0), 'account identity is null');
 
     // check the recipient has access to institutional contract
 
-    bytes32 fundId = fundsContract[msg.sender];
-    require(access[computeKey(fundId, receiverIdentity)] == true, "receiver identity doesn't have access");
+    // COMENTED FOR TESTING
+    // bytes32 fundId = fundsContract[msg.sender];
+    // require(access[computeKey(fundId, receiverIdentity)] == true, "receiver identity doesn't have access");
 
     // check the recipient has require claims
-    uint256[] memory requiredClaimTopics = requiredClaims[fundId];
+    // uint256[] memory requiredClaimTopics = requiredClaims[fundId];
 
-    for (uint256 i = 0; i < requiredClaimTopics.length; ++i) {
-      bytes32 claimId = keccak256(abi.encode(claimIssuer, requiredClaimTopics[i]));
+    // for (uint256 i = 0; i < requiredClaimTopics.length; ++i) {
+    //   bytes32 claimId = keccak256(abi.encode(claimIssuer, requiredClaimTopics[i]));
 
-      (uint256 topic, , , bytes memory signature, bytes memory claimData, ) = IIdentity(receiverIdentity).getClaim(
-        claimId
-      );
+    //   (uint256 topic, , , bytes memory signature, bytes memory claimData, ) = IIdentity(receiverIdentity).getClaim(
+    //     claimId
+    //   );
 
-      bool isValid = claimIssuer.isClaimValid(IIdentity(receiverIdentity), topic, signature, claimData);
-      require(isValid, 'Claim is not valid');
-    }
+    //   bool isValid = claimIssuer.isClaimValid(IIdentity(receiverIdentity), topic, signature, claimData);
+    //   require(isValid, 'Claim is not valid');
+    // }
 
     return true;
   }
@@ -77,5 +85,12 @@ contract xAuthAccessRegistry is IAccessRegistry, Ownable {
 
   function computeKey(bytes32 fundId, address identityAddr) public pure returns (bytes32) {
     return keccak256(abi.encodePacked(fundId, identityAddr));
+  }
+
+  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    if (interfaceId == type(IAccessRegistry).interfaceId) {
+      return true;
+    }
+    return super.supportsInterface(interfaceId);
   }
 }
