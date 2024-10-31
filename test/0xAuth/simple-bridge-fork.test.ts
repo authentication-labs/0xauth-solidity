@@ -89,7 +89,9 @@ describe('Bridge Fork Test', function () {
 
     const tx = await identityFactory
       .connect(newDeployerWallet)
-      .createIdentityWithManagementKeys(davidWallet.address, '432s4324234234alt1', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceWallet.address])) ]);
+      .createIdentity(davidWallet.address, '432s4324234234alt1');
+
+      // .createIdentityWithManagementKeys(davidWallet.address, '432s4324234234alt1', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceWallet.address])) ]);
 
     await expect(tx).to.emit(identityFactory, 'WalletLinked');
     await expect(tx).to.emit(identityFactory, 'Deployed');
@@ -114,18 +116,18 @@ describe('Bridge Fork Test', function () {
     );
 
     // David adds Alice's key
-    // const tx_addKey = await identity
-    //   .connect(davidWallet)
-    //   .addKey(aliceKeyHash, 1, 1);
-    // const receipt_addKey = await tx_addKey.wait();
+    const tx_addKey = await identity
+      .connect(davidWallet)
+      .addKey(aliceKeyHash, 1, 1);
+    const receipt_addKey = await tx_addKey.wait();
 
     const aliceKey = await identity.getKey(aliceKeyHash);
     expect(aliceKey.key).to.equal(aliceKeyHash);
 
-    // if (!receipt_addKey) return;
-    // const evm2EvmMessage_addKey = await getEvm2EvmMessage(receipt_addKey);
+    if (!receipt_addKey) return;
+    const evm2EvmMessage_addKey = await getEvm2EvmMessage(receipt_addKey);
 
-    // if (!evm2EvmMessage_addKey) return;
+    if (!evm2EvmMessage_addKey) return;
 
     console.log('-> Step : Identity ARB: Add Claim');
     /// TODO : Add claim
@@ -159,11 +161,10 @@ describe('Bridge Fork Test', function () {
     // bytes32 claimId = keccak256(abi.encode(_issuer, _topic));
     const receipt_addClaim = await tx_addClaim.wait();
 
-    console.log("work")
     const claimAddedEvent = receipt_addClaim?.logs
 
     const evm2EvmMessage_addClaim = await getEvm2EvmMessage(receipt_addClaim);
-    console.log("work")
+
     // const carolWalletkeyHash = ethers.keccak256(
     //   ethers.AbiCoder.defaultAbiCoder().encode(
     //     ['address'],
@@ -179,6 +180,29 @@ describe('Bridge Fork Test', function () {
     // console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys?.logs)
 
     // const evm2EvmMessage_createIdentityWithManagementKeys = await getEvm2EvmMessage(receipt_tx_createIdentityWithManagementKeys);
+
+
+    const tx_removeClaim = await identity.connect(aliceWallet).removeClaim(claimId);
+    const receipt_removeClaim = await tx_removeClaim.wait();
+
+    if (!receipt_removeClaim) return;
+    const evm2EvmMessage_removeClaim = await getEvm2EvmMessage(receipt_removeClaim);
+
+    if (!evm2EvmMessage_removeClaim) return;
+
+
+    const tx_removeKey = await identity
+    .connect(davidWallet)
+    .removeKey(aliceKeyHash, 1);
+  const receipttx_removeKey= await tx_removeKey.wait();
+
+
+  if (!receipttx_removeKey) return;
+  const evm2EvmMessage_removeKey = await getEvm2EvmMessage(receipttx_removeKey);
+
+  if (!evm2EvmMessage_removeKey) return;
+
+  
 
     await SETUP_NETWORK('BASE', BASE);
 
@@ -214,17 +238,17 @@ describe('Bridge Fork Test', function () {
 
     console.log('Identity BASE Address:', await identity_twin.getAddress());
 
-    // if (!evm2EvmMessage_addKey) return;
-    // try {
-    //   await routeMessage(
-    //     (
-    //       await CONTRACT_CONFIG()
-    //     ).ccipRouterAddressBase,
-    //     evm2EvmMessage_addKey,
-    //   );
-    // } catch (e) {
-    //   console.log('evm2EvmMessage_addKey Error : ', e);
-    // }
+    if (!evm2EvmMessage_addKey) return;
+    try {
+      await routeMessage(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipRouterAddressBase,
+        evm2EvmMessage_addKey,
+      );
+    } catch (e) {
+      console.log('evm2EvmMessage_addKey Error : ', e);
+    }
     const aliceKey_BASE = await identity_twin.getKey(aliceKeyHash);
     expect(aliceKey_BASE.key.toString()).to.equal(aliceKeyHash.toString());
     console.log('Alice key is matching');
@@ -240,6 +264,18 @@ describe('Bridge Fork Test', function () {
     } catch (e) {
       console.log('evm2EvmMessage_addClaim Error : ', e);
     }
+    if (!evm2EvmMessage_removeKey) return;
+    try {
+      await routeMessage(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipRouterAddressBase,
+        evm2EvmMessage_removeKey,
+      );
+    } catch (e) {
+      console.log('evm2EvmMessage_removeKey Error : ', e);
+    }
+
     // if (!evm2EvmMessage_createIdentityWithManagementKeys) return;
     // try {
     //   await routeMessage(
@@ -257,7 +293,7 @@ describe('Bridge Fork Test', function () {
     // console.log("evm2EvmMessage_addClaim", evm2EvmMessage_addClaim)
 
     const aliceClaim_BASE = await identity_twin.getClaim(claimId);
-    console.log(' Claim BASE:', aliceClaim_BASE);
+    // console.log(' Claim BASE:', aliceClaim_BASE);
     // Format the retrieved claim to match our initial claim object format
     const formattedClaim = {
       topic: aliceClaim_BASE[0],
@@ -276,6 +312,41 @@ describe('Bridge Fork Test', function () {
     expect(formattedClaim.data).to.equal(claim.data);
     expect(formattedClaim.uri).to.equal(claim.uri);
     console.log("AddClaim passed")
+
+    const aliceRemovedKey_BASE = await identity_twin.getKey(aliceKeyHash);
+    expect(aliceRemovedKey_BASE.key.toString()).to.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+    console.log('Alice Removed key is working');
+    if (!evm2EvmMessage_removeClaim) return;
+    try {
+      await routeMessage(
+        (
+          await CONTRACT_CONFIG()
+        ).ccipRouterAddressBase,
+        evm2EvmMessage_removeClaim,
+      );
+    } catch (e) {
+      console.log('evm2EvmMessage_removeClaim Error : ', e);
+    }
+    const aliceRemovedClaim_BASE = await identity_twin.getClaim(claimId)
+      // Format the retrieved claim to match our initial claim object format
+      const formattedRemovedClaim = {
+        topic: aliceRemovedClaim_BASE[0],
+        scheme: aliceRemovedClaim_BASE[1],
+        issuer: aliceRemovedClaim_BASE[2],
+        signature: aliceRemovedClaim_BASE[3],
+        data: aliceRemovedClaim_BASE[4],
+        uri: aliceRemovedClaim_BASE[5]
+      };
+
+    // Add assertions to ensure the returned values match the expected values
+    expect(formattedRemovedClaim.topic).to.equal(0n);
+    expect(formattedRemovedClaim.scheme).to.equal(0n);
+    expect(formattedRemovedClaim.issuer).to.equal("0x0000000000000000000000000000000000000000");
+    expect(formattedRemovedClaim.signature).to.equal("0x");
+    expect(formattedRemovedClaim.data).to.equal("0x");
+    expect(formattedRemovedClaim.uri).to.equal("");
+    console.log("RemoveClaim is Working")
+    
     /**
      */
   });

@@ -16,6 +16,5 @@
     "./test",
     "typechain/**/*",
     "typechain-types/**/*",
-     "custom.d.ts"
-, "deploy_scripts"  ]
+     "custom.d.ts", "deploy_scripts"  ]
 }
