@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 interface IIdFactory {
   /// events
@@ -54,10 +54,16 @@ interface IIdFactory {
   event TokenFactoryRemoved(address indexed factory);
 
   // event emitted when a receiver is added for a chainSelector
-  event ReceiverAdded(uint64 chainSelector, address receiver, address gateway);
+  event CCIPReceiverAdded(uint64 chainSelector, address receiver, address gateway);
 
   // event emitted when a receiver is removed for a chainSelector
-  event ReceiverRemoved(uint64 chainSelector);
+  event CCIPReceiverRemoved(uint64 chainSelector);
+
+  // event emitted when a destination endpoint is added
+  event LzReceiverAdded(uint32 _dstEid);
+
+  // event emitted when a destination endpoint is removed
+  event LzReceiverRemoved(uint32 _dstEid);
 
   /// functions
 
@@ -104,12 +110,20 @@ interface IIdFactory {
   function createTokenIdentity(address _token, address _tokenOwner, string memory _salt) external returns (address);
 
   /**
-   * @dev function used to update bridge contract address
-   * @param _bridge the address of the bridge contract
+   * @dev function used to update CCIP bridge contract address
+   * @param _bridge the address of the CCIP bridge contract
    * can be called only by Owner
    */
 
-  function setBridge(address _bridge) external;
+  function setCCIPBridge(address _bridge) external;
+
+  /**
+   * @dev function used to update Lz bridge contract address
+   * @param  _bridge the address of the LZ bridge contract
+   * can be called only by Owner
+   */
+
+  function setLzBridge(address _bridge) external;
 
   /**
    *  @dev function used to link a new wallet to an existing identity
@@ -158,7 +172,7 @@ interface IIdFactory {
    *  _receiver cannot be registered yet
    *  once the receiver has been registered it can receive messages from the chainSelector
    */
-  function addReceiver(uint64 _chainSelector, address _receiver, address _gateway) external;
+  function addCCIPReceiver(uint64 _chainSelector, address _receiver, address _gateway) external;
 
   /**
    *  @dev function used to remove a receiver for a chainSelector
@@ -167,7 +181,21 @@ interface IIdFactory {
    *  _receiver has to be registered previously
    *  once the receiver has been removed it cannot receive messages from the chainSelector anymore
    */
-  function removeReceiver(uint64 _chainSelector) external;
+  function removeCCIPReceiver(uint64 _chainSelector) external;
+
+  /**
+   *  @dev function used to add a destination endpoint
+   *  @param _dstEid is the destination endpoint ID
+   *  can be called only by Owner
+   */
+  function addLzReceiver(uint32 _dstEid) external;
+
+  /**
+   *  @dev function used to remove  destination endpoint ID
+   *  @param _dstEid  is the destination endpoint ID
+   *  can be called only by Owner
+   */
+  function removeLzReceiver(uint32 _dstEid) external;
 
   /**
    *  @dev getter for OID contract corresponding to a wallet/token
@@ -219,6 +247,11 @@ interface IIdFactory {
   function getChainSelectors() external view returns (uint64[] memory);
 
   /**
+   * @dev getter for the list of destination endpoints
+   */
+  function getDstEid() external view returns (uint32[] memory);
+
+  /**
    * @dev getter for the list of receivers
    */
   function getReceivers() external view returns (address[] memory);
@@ -226,7 +259,12 @@ interface IIdFactory {
   /**
    * @dev getter for the bridge contract address
    */
-  function bridge() external view returns (address);
+  function getCCIPBridge() external view returns (address);
+
+  /**
+   * @dev getter for the bridge contract address
+   */
+  function getLzBridge() external view returns (address);
 
   /**
    * @dev getter for the created Identites

@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import '../proxy/IdentityProxy.sol';
 import './IIdFactory.sol';
 import '../interface/IERC734.sol';
-import { CrossChainBridge } from '../bridge/Bridge.sol';
+import { CrossChainBridge } from '../bridge/CCIPBridge.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 import '../IAccessRegistry.sol';
+import { LayerZeroBridge } from '../bridge/LayerzeroBridge.sol';
 /// @notice REMOVE in prod
 import 'hardhat/console.sol';
 
 contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
+
   mapping(address => bool) private _tokenFactories;
 
   // address of the _implementationAuthority contract making the link to the implementation contract
@@ -41,9 +43,11 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
   mapping(uint64 => address) public destinationChainSelectorToReceiver;
   mapping(uint64 => address) public destinationChainSelectorToGateway;
   uint64[] private chainSelectors;
+  uint32[] private dstEids;
 
   // CrossChainBridge address
-  address public bridge;
+  address public ccipBridge;
+  address public lzBridge;
 
   // Map to store allowedContracts
   mapping(address => bool) public isAllowedContract;
@@ -237,10 +241,9 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
   }
 
   /**
-   *  @dev See {IdFactory-addReceiver}.
+   *  @dev See {IdFactory-addCCIPReceiver}.
    */
-
-  function addReceiver(uint64 _chainSelector, address _receiver, address _gateway) external override onlyOwner {
+  function addCCIPReceiver(uint64 _chainSelector, address _receiver, address _gateway) external override onlyOwner {
     require(_receiver != address(0), 'invalid argument - zero address');
     require(destinationChainSelectorToReceiver[_chainSelector] == address(0), 'receiver already added');
     require(destinationChainSelectorToGateway[_chainSelector] == address(0), 'gateway already added');
@@ -249,14 +252,14 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     destinationChainSelectorToGateway[_chainSelector] = _gateway;
 
     chainSelectors.push(_chainSelector);
-    emit ReceiverAdded(_chainSelector, _receiver, _gateway);
+    emit CCIPReceiverAdded(_chainSelector, _receiver, _gateway);
   }
 
   /**
    *  @dev See {IdFactory-removeReceiver}.
    */
 
-  function removeReceiver(uint64 _chainSelector) external override onlyOwner {
+  function removeCCIPReceiver(uint64 _chainSelector) external override onlyOwner {
     require(destinationChainSelectorToReceiver[_chainSelector] != address(0), 'receiver not added');
     delete destinationChainSelectorToReceiver[_chainSelector];
     delete destinationChainSelectorToGateway[_chainSelector];
@@ -269,7 +272,33 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
         break;
       }
     }
-    emit ReceiverRemoved(_chainSelector);
+    emit CCIPReceiverRemoved(_chainSelector);
+  }
+
+  /**
+   *  @dev See {IdFactory-addLzReceiver}.
+   */
+  function addLzReceiver(uint32 _dstEid) external override onlyOwner {
+    require(_dstEid != 0, 'invalid argument - _dstEid cannot be zero');
+    dstEids.push(_dstEid);
+    emit LzReceiverAdded(_dstEid);
+  }
+  /**
+   *  @dev See {IdFactory-removeLzReceiver}.
+   */
+
+  function removeLzReceiver(uint32 _dstEid) external override onlyOwner {
+    require(_dstEid != 0, 'invalid argument - _dstEid cannot be zero');
+
+    uint256 length = dstEids.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (dstEids[i] == _dstEid) {
+        dstEids[i] = dstEids[length - 1];
+        dstEids.pop();
+        break;
+      }
+    }
+    emit LzReceiverRemoved(_dstEid);
   }
 
   /**
@@ -278,6 +307,13 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
 
   function getChainSelectors() external view override returns (uint64[] memory) {
     return chainSelectors;
+  }
+  /**
+   *  @dev See {IdFactory-getDstEid}.
+   */
+
+  function getDstEid() external view override returns (uint32[] memory) {
+    return dstEids;
   }
 
   /**
@@ -352,18 +388,34 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
 
   /**
    *
-   * @param _bridge the address of the bridge contract
+   * @param _bridge the address of the CCIP bridge contract
    */
-  function setBridge(address _bridge) external onlyOwner {
+  function setCCIPBridge(address _bridge) external onlyOwner {
     require(_bridge != address(0), 'invalid argument - zero address');
-    bridge = _bridge;
+    ccipBridge = _bridge;
+  }
+  
+  /**
+   *
+   * @param _lzBridge the address of the LZ bridge contract
+   */
+  function setLzBridge(address _lzBridge) external onlyOwner {
+    require(_lzBridge != address(0), 'invalid argument - zero address');
+    lzBridge = _lzBridge;
   }
 
   /**
    *  @dev get bridge address
    */
-  function getBridge() external view returns (address) {
-    return bridge;
+  function getCCIPBridge() external view returns (address) {
+    return ccipBridge;
+  }
+
+  /**
+   *  @dev get bridge address
+   */
+  function getLzBridge() external view returns (address) {
+    return lzBridge;
   }
 
   // deploy function with create2 opcode call
@@ -401,8 +453,10 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     string memory oidSalt,
     bytes32[] memory managementKeys // uint256 signatureExpiry, // bytes calldata signature
   ) internal {
+    CrossChainBridge bridgeContract = CrossChainBridge(payable(ccipBridge));
+    LayerZeroBridge lzBridgeContract = LayerZeroBridge(payable(lzBridge));
+
     for (uint256 i = 0; i < chainSelectors.length; i++) {
-      CrossChainBridge bridgeContract = CrossChainBridge(payable(bridge));
       bridgeContract.sendCreateIdentity(
         chainSelectors[i],
         destinationChainSelectorToReceiver[chainSelectors[i]],
@@ -412,6 +466,15 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
         managementKeys
         // signatureExpiry,
         // signature
+      );
+    }
+    
+    for (uint256 i = 0; i < dstEids.length; i++) {
+      lzBridgeContract.sendLzCreateIdentity(
+        dstEids[i],
+        _wallet,
+        oidSalt,
+        managementKeys
       );
     }
   }
@@ -492,7 +555,6 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
 
   }
 
-}
   // For fireblocks integeration
   // from IAccessRegistry.sol
   function hasAccess(address account, address caller, bytes calldata data) external view returns (bool) {

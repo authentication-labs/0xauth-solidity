@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import './interface/IIdentity.sol';
 import './interface/IClaimIssuer.sol';
 import './version/Version.sol';
 import './storage/Storage.sol';
-import { CrossChainBridge } from './bridge/Bridge.sol';
+import { CrossChainBridge } from './bridge/CCIPBridge.sol';
+import { LayerZeroBridge } from './bridge/LayerzeroBridge.sol';
 
 /**
  * @dev Implementation of the `IERC734` "KeyHolder" and the `IERC735` "ClaimHolder" interfaces
@@ -28,7 +29,8 @@ contract Identity is Storage, IIdentity, Version {
   modifier onlyManager() {
     require(
       msg.sender == address(this) ||
-        msg.sender == idFactory.getBridge() ||
+        msg.sender == idFactory.getCCIPBridge() ||
+        msg.sender == idFactory.getLzBridge() ||
         keyHasPurpose(keccak256(abi.encode(msg.sender)), 1),
       'Permissions: Sender does not have management key'
     );
@@ -41,7 +43,8 @@ contract Identity is Storage, IIdentity, Version {
   modifier onlyClaimKey() {
     require(
       msg.sender == address(this) ||
-        msg.sender == idFactory.getBridge() ||
+        msg.sender == idFactory.getCCIPBridge() ||
+        msg.sender == idFactory.getLzBridge() ||
         keyHasPurpose(keccak256(abi.encode(msg.sender)), 3),
       'Permissions: Sender does not have claim signer key'
     );
@@ -214,7 +217,7 @@ contract Identity is Storage, IIdentity, Version {
     bool isHomeChain = idFactory._isHomeChain();
     // Don't send message when calling via createIdentityWithManagementKeys
     if (isHomeChain && msg.sender != address(idFactory)) {
-      address bridgeAddress = idFactory.getBridge();
+      address bridgeAddress = idFactory.getCCIPBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
@@ -222,10 +225,24 @@ contract Identity is Storage, IIdentity, Version {
       address[] memory receivers = idFactory.getReceivers();
       uint64[] memory chainSelectors = idFactory.getChainSelectors();
 
-      // Send message to the bridge
+      // Send message to CCIP bridge
       for (uint i = 0; i < receivers.length; i++) {
         bridge.sendAddKey(chainSelectors[i], receivers[i], _key, _purpose, _type);
       }
+
+      address lzBridgeAddress = idFactory.getLzBridge();
+      LayerZeroBridge lzBridgeContract = LayerZeroBridge(payable(lzBridgeAddress));
+
+      uint32[] memory _dstEids = idFactory.getDstEid();
+        for (uint i = 0; i < _dstEids.length; i++) {
+          lzBridgeContract.sendLzAddKey(
+            _dstEids[i],
+            _key,
+            _purpose,
+            _type
+          );
+        }
+
     } else {}
 
     return true;
@@ -331,7 +348,7 @@ contract Identity is Storage, IIdentity, Version {
     bool isHomeChain = idFactory._isHomeChain();
     // Don't send message when calling via createIdentityWithManagementKeys
     if (isHomeChain && msg.sender != address(idFactory)) {
-      address bridgeAddress = idFactory.getBridge();
+      address bridgeAddress = idFactory.getCCIPBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
@@ -343,6 +360,18 @@ contract Identity is Storage, IIdentity, Version {
       for (uint i = 0; i < receivers.length; i++) {
         bridge.sendRemoveKey(chainSelectors[i], receivers[i], _key, _purpose);    
       }
+
+      address lzBridgeAddress = idFactory.getLzBridge();
+      LayerZeroBridge lzBridgeContract = LayerZeroBridge(payable(lzBridgeAddress));
+
+      uint32[] memory _dstEids = idFactory.getDstEid();
+        for (uint i = 0; i < _dstEids.length; i++) {
+          lzBridgeContract.sendLzRemoveKey(
+            _dstEids[i],
+            _key,
+            _purpose
+          );
+        }
     }
 
     return true;
@@ -402,7 +431,7 @@ contract Identity is Storage, IIdentity, Version {
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
-      address bridgeAddress = idFactory.getBridge();
+      address bridgeAddress = idFactory.getCCIPBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
@@ -415,6 +444,23 @@ contract Identity is Storage, IIdentity, Version {
           bridge.sendAddClaim(
             chainSelectors[i],
             receivers[i],
+            _topic,
+            _scheme,
+            _issuer,
+            _signature,
+            _data,
+            _uri
+          );
+        }
+
+
+      address lzBridgeAddress = idFactory.getLzBridge();
+      LayerZeroBridge lzBridgeContract = LayerZeroBridge(payable(lzBridgeAddress));
+
+      uint32[] memory _dstEids = idFactory.getDstEid();
+        for (uint i = 0; i < _dstEids.length; i++) {
+          lzBridgeContract.sendLzAddClaim(
+            _dstEids[i],
             _topic,
             _scheme,
             _issuer,
@@ -484,7 +530,7 @@ contract Identity is Storage, IIdentity, Version {
 
     bool isHomeChain = idFactory._isHomeChain();
     if (isHomeChain) {
-      address bridgeAddress = idFactory.getBridge();
+      address bridgeAddress = idFactory.getCCIPBridge();
       // Explicit conversion to payable address and then to CrossChainBridge
       CrossChainBridge bridge = CrossChainBridge(payable(bridgeAddress));
 
@@ -496,7 +542,18 @@ contract Identity is Storage, IIdentity, Version {
       for (uint i = 0; i < receivers.length; i++) {
         bridge.sendRemoveClaim(chainSelectors[i], receivers[i], _claimId);
       }
-    }
+    
+      address lzBridgeAddress = idFactory.getLzBridge();
+      LayerZeroBridge lzBridgeContract = LayerZeroBridge(payable(lzBridgeAddress));
+
+      uint32[] memory _dstEids = idFactory.getDstEid();
+        for (uint i = 0; i < _dstEids.length; i++) {
+          lzBridgeContract.sendLzRemoveClaim(
+            _dstEids[i],
+            _claimId
+          );
+        }
+      }
 
     return true;
   }

@@ -2,6 +2,7 @@
   "name": "@0xauth/contracts",
   "version": "0.0.1",
   "description": "EVM solidity smart contracts for Blockchain OnchainID identities.",
+  "packageManager": "yarn@1.22.22",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.1",
     "@nomicfoundation/hardhat-ethers": "^3.0.2",
@@ -65,10 +66,14 @@
     "@chainlink/env-enc": "^1.0.5",
     "@chainlink/functions-toolkit": "^0.3.1",
     "@chainlink/local": "^0.2.1",
+    "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.9",
+    "@layerzerolabs/lz-evm-protocol-v2": "^3.0.7",
+    "@layerzerolabs/oapp-evm": "^0.0.4",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "axios": "^1.7.0",
     "bignumber.js": "^9.1.2",
     "qs": "^6.12.1",
+    "solidity-bytes-utils": "^0.8.2",
     "v5ethers": "npm:ethers@^5.7.2"
   }
 }

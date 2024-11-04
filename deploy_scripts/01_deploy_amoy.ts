@@ -148,7 +148,7 @@ async function deploy_fixture_AMOY(
   const tx_setAllowedContract_bridge = await instance_identityFactory_AMOY.setAllowedContract(BRIDGE_CONTRACT_AMOY.address, true);
   await tx_setAllowedContract_bridge.wait();
 
-  const tx_setBridge = await instance_identityFactory_AMOY.setBridge(BRIDGE_CONTRACT_AMOY.address);
+  const tx_setBridge = await instance_identityFactory_AMOY.setCCIPBridge(BRIDGE_CONTRACT_AMOY.address);
   await tx_setBridge.wait();
 
   // Get the contract instance of ImplementationAuthority

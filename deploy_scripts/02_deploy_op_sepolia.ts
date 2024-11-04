@@ -107,9 +107,9 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     deployerSigner, // Use deployer's signer
   );
 
-  await instance_factory.setBridge(bridge.address);
+  await instance_factory.setCCIPBridge(bridge.address);
 
-  await instance_factory.addReceiver((
+  await instance_factory.addCCIPReceiver((
     await CONTRACT_CONFIG()
   ).ccipChainSelectorAMOY, BRIDGE_CONTRACT_AMOY_address, GATEWAY_AMOY_address);
 
