@@ -9,6 +9,7 @@ import { OptionsBuilder } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/Opti
 import { OAppCore } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppCore.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import '../factory/IIdFactory.sol';
+import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 
 // Example contract inheriting LayerZero functionalities
 contract LayerZeroBridge is Ownable, OAppSender {
@@ -155,4 +156,10 @@ contract LayerZeroBridge is Ownable, OAppSender {
             payable(owner())
         );
     }
+  
+  // Function to withdraw native token from the contract
+  function withdraw(address _to, uint256 _amount) external onlyManager {
+    require(address(this).balance >= _amount, 'Insufficient balance');
+    Address.sendValue(payable(_to), _amount);
+  }
 }
