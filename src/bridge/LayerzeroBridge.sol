@@ -11,7 +11,6 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import '../factory/IIdFactory.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 
-// Example contract inheriting LayerZero functionalities
 contract LayerZeroBridge is Ownable, OAppSender {
     using OptionsBuilder for bytes;
 
@@ -115,9 +114,9 @@ contract LayerZeroBridge is Ownable, OAppSender {
 
   function sendLzRemoveClaim(
     uint32 _dstEid,
-    bytes32 claimId
-  ) external onlyAllowedIdentity(msg.sender) {
-    bytes memory _payload = abi.encode(msg.sender, claimId);
+    uint256 _topic
+    ) external onlyAllowedIdentity(msg.sender) {
+    bytes memory _payload = abi.encode(msg.sender, _topic);
     bytes memory metaPayload = abi.encode('RemoveClaim',_payload);
     _sendMessage(_dstEid, metaPayload);
   }
@@ -156,7 +155,13 @@ contract LayerZeroBridge is Ownable, OAppSender {
             payable(owner())
         );
     }
-  
+
+  // @dev must-have configurations for standard OApps
+function setPeer(uint32 _eid, bytes32 _peer) public virtual override onlyOwner {
+    peers[_eid] = _peer; // Array of peer addresses by destination.
+    emit PeerSet(_eid, _peer); // Event emitted each time a peer is set.
+}
+
   // Function to withdraw native token from the contract
   function withdraw(address _to, uint256 _amount) external onlyManager {
     require(address(this).balance >= _amount, 'Insufficient balance');
