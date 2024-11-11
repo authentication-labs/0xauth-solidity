@@ -121,6 +121,7 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
    */
   function createIdentity(
     address _wallet,
+    bytes32 _solanaWallet,
     string memory _salt
   ) external override onlyAllowedSender returns (address identity) {
     require(_wallet != address(0), 'invalid argument - zero address');
@@ -137,7 +138,7 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     isCreatedIdentity[identity] = true;
     if (_isHomeChain == true) {
       bytes32[] memory _keys;
-      _bridgeCreateIdentity(_wallet, _salt, _keys);
+      _bridgeCreateIdentity(_wallet, _solanaWallet, _salt, _keys);
     }
     return identity;
   }
@@ -147,6 +148,7 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
    */
   function createIdentityWithManagementKeys(
     address _wallet,
+    bytes32 _solanaWallet,
     string memory _salt,
     bytes32[] memory _managementKeys
   ) external override onlyAllowedSender returns (address) {
@@ -165,7 +167,7 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     _wallets[identity].push(_wallet);
     isCreatedIdentity[identity] = true;
     if (_isHomeChain == true) {
-      _bridgeCreateIdentity(_wallet, _salt, _managementKeys);
+      _bridgeCreateIdentity(_wallet, _solanaWallet, _salt, _managementKeys);
     }
     for (uint i = 0; i < _managementKeys.length; i++) {
       require(
@@ -450,6 +452,7 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
 
   function _bridgeCreateIdentity(
     address _wallet,
+    bytes32 _solanaWallet,
     string memory oidSalt,
     bytes32[] memory managementKeys // uint256 signatureExpiry, // bytes calldata signature
   ) internal {
@@ -468,14 +471,15 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
         // signature
       );
     }
-    
-    for (uint256 i = 0; i < dstEids.length; i++) {
-      lzBridgeContract.sendLzCreateIdentity(
-        dstEids[i],
-        _wallet,
-        oidSalt,
-        managementKeys
-      );
+    if (_solanaWallet != "0x00") {
+      for (uint256 i = 0; i < dstEids.length; i++) {
+        lzBridgeContract.sendLzCreateIdentity(
+          dstEids[i],
+          _solanaWallet,
+          oidSalt,
+          managementKeys
+        );
+      }
     }
   }
 

@@ -123,7 +123,7 @@ contract Gateway is Ownable {
       revert UnapprovedSigner(msg.sender);
     }
 
-    return idFactory.createIdentity(identityOwner, salt);
+    return idFactory.createIdentity(identityOwner, "0x00", salt);
   }
 
   /**
@@ -148,7 +148,7 @@ contract Gateway is Ownable {
       revert UnapprovedSigner(msg.sender);
     }
 
-    address identity = idFactory.createIdentityWithManagementKeys(identityOwner, salt, managementKeys);
+    address identity = idFactory.createIdentityWithManagementKeys(identityOwner, "0x00", salt, managementKeys);
 
     // bool isHomeChain = idFactory._isHomeChain();
 
@@ -188,7 +188,7 @@ contract Gateway is Ownable {
       revert ZeroAddress();
     }
 
-    return idFactory.createIdentity(identityOwner, Strings.toHexString(identityOwner));
+    return idFactory.createIdentity(identityOwner, "0x00", Strings.toHexString(identityOwner));
   }
 
   /**

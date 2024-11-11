@@ -134,7 +134,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 
   console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');
     
-  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(bobWallet, 'bobWallet', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
+  const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(bobWallet, "0x00", 'bobWallet', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
   await tx_createIdentity.wait();
      
   console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(bobWallet));

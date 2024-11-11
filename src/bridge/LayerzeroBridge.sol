@@ -10,9 +10,11 @@ import { OAppCore } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppCore.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import '../factory/IIdFactory.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
+import { BytesLib } from "solidity-bytes-utils/contracts/BytesLib.sol";
 
 contract LayerZeroBridge is Ownable, OAppSender {
     using OptionsBuilder for bytes;
+    using BytesLib for bytes;
 
     address public idFactoryAddress;
 
@@ -69,7 +71,7 @@ contract LayerZeroBridge is Ownable, OAppSender {
     }
 
     // Options for LayerZero message
-    bytes private _options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(50000, 0);
+    bytes private _options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(1000000, 0);
 
     /**
      * @dev Quotes the gas needed to pay for the full omnichain transaction in native gas or ZRO token.
@@ -86,28 +88,27 @@ contract LayerZeroBridge is Ownable, OAppSender {
         fee = _quote(_dstEid, payload, _options, _payInLzToken);
     }
 
-    function sendLzCreateIdentity(
-        uint32 _dstEid,
-        address identityOwner,
-        string memory salt,
-        bytes32[] calldata managementKeys
-    ) external payable onlyAllowedSender {
-        bytes memory _payload = abi.encode(identityOwner, salt, managementKeys);
-        bytes memory metaPayload = abi.encode('CreateIdentity', _payload);
-        _sendMessage(_dstEid, metaPayload);
-    }
+function sendLzCreateIdentity(
+    uint32 _dstEid,
+    bytes32 solanaIdentityOwner, // New parameter for Solana Pubkey
+    string memory salt,
+    bytes32[] calldata managementKeys
+) external payable onlyAllowedSender {
+    bytes memory _payload = abi.encode(solanaIdentityOwner, salt, managementKeys);
+    bytes memory metaPayload = abi.encode('CreateIdentity', _payload);
+    _sendMessage(_dstEid, metaPayload);
+}
 
 
   function sendLzAddClaim(
     uint32 _dstEid,
     uint256 topic,
     uint256 scheme,
-    address issuer,
     bytes memory signature,
     bytes memory data,
     string memory uri
   ) external onlyAllowedIdentity(msg.sender) {
-    bytes memory _payload = abi.encode(msg.sender, topic, scheme, issuer, signature, data, uri);
+    bytes memory _payload = abi.encode(msg.sender, topic, scheme, signature, data, uri);
     bytes memory metaPayload = abi.encode('AddClaim', _payload);
     _sendMessage(_dstEid, metaPayload);
   }
@@ -155,6 +156,24 @@ contract LayerZeroBridge is Ownable, OAppSender {
             payable(owner())
         );
     }
+
+
+  // Function to set allowed contracts
+  function setAllowedContract(address _contract, bool _status) external onlyManager {
+    if (_status == true) {
+      require(Address.isContract(_contract), 'Permissions: Address is not a contract');
+    }
+    isAllowedContract[_contract] = _status;
+
+    emit AllowedAddress(_contract, uint64(AccessAddressTypes.CONTRACT), _status);
+  }
+
+  // Function to set manager status
+  function setManager(address _manager, bool _status) external onlyManager {
+    isManager[_manager] = _status;
+
+    emit AllowedAddress(_manager, uint64(AccessAddressTypes.MANAGER), _status);
+  }
 
   // @dev must-have configurations for standard OApps
 function setPeer(uint32 _eid, bytes32 _peer) public virtual override onlyOwner {

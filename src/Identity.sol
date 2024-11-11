@@ -463,7 +463,6 @@ contract Identity is Storage, IIdentity, Version {
             _dstEids[i],
             _topic,
             _scheme,
-            _issuer,
             _signature,
             _data,
             _uri
@@ -550,7 +549,7 @@ contract Identity is Storage, IIdentity, Version {
         for (uint i = 0; i < _dstEids.length; i++) {
           lzBridgeContract.sendLzRemoveClaim(
             _dstEids[i],
-            _claimId
+            _topic
           );
         }
       }

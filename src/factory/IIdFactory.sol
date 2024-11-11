@@ -70,6 +70,7 @@ interface IIdFactory {
   /**
    *  @dev function used to create a new Identity proxy from the factory
    *  @param _wallet the wallet address of the primary owner of this ONCHAINID contract
+   *  @param _solanaWallet the wallet address of the primary owner of this ONCHAINID contract on Solana
    *  @param _salt the salt used by create2 to issue the contract
    *  requires a new salt for each deployment
    *  _wallet cannot be linked to another ONCHAINID
@@ -77,12 +78,13 @@ interface IIdFactory {
    *  of the function, including calls to oracles for multichain
    *  deployment security (avoid identity theft), defining payment requirements, etc.
    */
-  function createIdentity(address _wallet, string memory _salt) external returns (address);
+  function createIdentity(address _wallet, bytes32 _solanaWallet, string memory _salt) external returns (address);
 
   /**
    *  @dev function used to create a new Identity proxy from the factory, setting the wallet and listed keys as
    * MANAGEMENT keys.
    *  @param _wallet the wallet address of the primary owner of this ONCHAINID contract
+   *  @param _solanaWallet the wallet address of the primary owner of this ONCHAINID contract on Solana
    *  @param _salt the salt used by create2 to issue the contract
    *  @param _managementKeys A list of keys hash (keccak256(abiEncoded())) to add as MANAGEMENT keys.
    *  requires a new salt for each deployment
@@ -93,6 +95,7 @@ interface IIdFactory {
    */
   function createIdentityWithManagementKeys(
     address _wallet,
+    bytes32 _solanaWallet,
     string memory _salt,
     bytes32[] memory _managementKeys
   ) external returns (address);

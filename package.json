@@ -72,6 +72,7 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "axios": "^1.7.0",
     "bignumber.js": "^9.1.2",
+    "bs58": "^6.0.0",
     "qs": "^6.12.1",
     "solidity-bytes-utils": "^0.8.2",
     "v5ethers": "npm:ethers@^5.7.2"
