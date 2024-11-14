@@ -26,68 +26,36 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const claimIssuerWalletSigner = await ethers.getSigner(claimIssuerWallet);
   console.log(`Deploying contracts with the account: ${deployerWallet}`);
  
-
-  const LZ_BRIDGE_CONTRACT_AMOY = await deploy('LayerZeroBridge', {
-    from: deployerWallet,
-    args: ["0x6EDCE65403992e310A62460808c4b910D972f10f"],
-    log: true,
-  });
-
-  console.log('LZ_BRIDGE_CONTRACT_AMOY : ', LZ_BRIDGE_CONTRACT_AMOY.address);
- 
-  await deployerSigner.sendTransaction({
-    to: LZ_BRIDGE_CONTRACT_AMOY.address,
-    value: ethers.parseEther('0.2'),
-  })
-
-  const identityFactory_AMOY = await deploy('IdFactory', {
-    from: deployerWallet,
-    args: [deployerWallet, "0x176917A71A0eBc155acFEF233Ab1ED43FD5cFA48", false],
-    log: true,
-  });
-
-  console.log('identityFactory_AMOY : ', identityFactory_AMOY.address);
-
-
-  const instance_lzBridge = await ethers.getContractAt(
-    'LayerZeroBridge',
-    LZ_BRIDGE_CONTRACT_AMOY.address,
+   
+  const instance_factory = await ethers.getContractAt(
+    'IdFactory',
+    "0x067EA6441F898cD374d7438dc76B0aE79E714851",
     deployerSigner, // Use deployer's signer
   );
-
-  await instance_lzBridge.setAllowedContract(identityFactory_AMOY.address, true);
-
-  await instance_lzBridge.setFactoryAddress(identityFactory_AMOY.address);
-
-  const solanaAddressBase58 = "A9H111rEFg1ASjijzLLKcTiiJ1pKr7xT43XfGDssnJhc";
-  const decodedAddress = bs58.decode(solanaAddressBase58);
+  
+  const solanaAddressBase581 = "HMH75vbg32C6e2jmxAv1dVGFckx4fbbKFDGpm2jeJ5Ug";
+  const decodedAddress1 = bs58.decode(solanaAddressBase581);
   // ress = bs58.decode(solanaAddressBase58);
 
   // Check length, Solana addresses should decode to 32 bytes
-  if (decodedAddress.length !== 32) {
+  if (decodedAddress1.length !== 32) {
       throw new Error("Invalid Solana address length!");
   }
   
   // const formattedAddress = hexlify(decodedAddress);
-  const formattedAddress = ethers.hexlify(decodedAddress);
-  
-  console.log(formattedAddress); // Should fit the 32-byte requirement
-  await instance_lzBridge.setPeer(40168, formattedAddress)
-
-  // A9H111rEFg1ASjijzLLKcTiiJ1pKr7xT43XfGDssnJhc
-
-  
-  // Get the contract instance of ImplementationAuthority
-  const instance_factory = await ethers.getContractAt(
-    'IdFactory',
-    identityFactory_AMOY.address,
-    deployerSigner, // Use deployer's signer
-  );
-
+  const formattedAddress1 = ethers.hexlify(decodedAddress1);
+  // console.log("claimIssuerWallet:", claimIssuerWallet);
+  console.log("formattedAddress:", formattedAddress1);
+  // console.log("salt:", 'saltnewadd15fake');
+  // console.log("managementKeys:", [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet]))]);
+  // console.log(`Deploying contracts with the account: ${deployerWallet}`);
 
   // console.log('-> Step : ID factory OP_SEPOLIA: Create identity With Management Keys');   
-  // const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(testWallet, 'saltnewadd15fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
+  // const tx_createIdentity = await instance_factory.createIdentityWithManagementKeys(bobWallet, formattedAddress1, 'saltnewaw2dd15fake', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [deployerWallet])) ]);
   // await tx_createIdentity.wait();
+
+  const tx_createIdentity = await instance_factory.createIdentity(bobWallet, formattedAddress1, 'ddddddd');
+  await tx_createIdentity.wait();
      
   // console.log('Identity Created OP_SEPOLIA Address:', await instance_factory.getIdentity(testWallet));
 

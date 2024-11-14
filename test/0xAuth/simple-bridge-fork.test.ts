@@ -89,7 +89,7 @@ describe('Bridge Fork Test', function () {
 
     const tx = await identityFactory
       .connect(newDeployerWallet)
-      .createIdentity(davidWallet.address, '432s4324234234alt1');
+      .createIdentity(davidWallet.address, "0x3b89b5987e3b18b4dca3c5d1b27f74b81737c2a1719349cd0f1a706effff1557", '432s4324234234alt1');
 
       // .createIdentityWithManagementKeys(davidWallet.address, '432s4324234234alt1', [ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceWallet.address])) ]);
 

@@ -136,7 +136,11 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
     emit WalletLinked(_wallet, identity);
 
     isCreatedIdentity[identity] = true;
+        console.log('139 reached Create Identity');
+
     if (_isHomeChain == true) {
+          console.log('142 reached Create Identity');
+
       bytes32[] memory _keys;
       _bridgeCreateIdentity(_wallet, _solanaWallet, _salt, _keys);
     }
@@ -471,14 +475,21 @@ contract IdFactory is IIdFactory, Ownable, IAccessRegistry {
         // signature
       );
     }
+    console.log('459 reached Create Identity');
+
     if (_solanaWallet != "0x00") {
       for (uint256 i = 0; i < dstEids.length; i++) {
+
+        console.log('482 reached Create Identity');
+
         lzBridgeContract.sendLzCreateIdentity(
           dstEids[i],
           _solanaWallet,
           oidSalt,
           managementKeys
         );
+        console.log('490 reached Create Identity');
+
       }
     }
   }

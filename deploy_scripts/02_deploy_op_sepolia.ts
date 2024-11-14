@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { ethers, network } from 'hardhat';
 import { node_url } from '../utils/network';
+import bs58 from 'bs58'
 
 
 const deployContracts: DeployFunction = async function (
@@ -50,6 +51,17 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   });
   
   console.log('DeployerWallet nonce : ', await deployerSigner.getNonce());
+
+  const lz_bridge = await deploy('LayerZeroBridge', {
+    from: deployerWallet,
+    args: [(
+      await CONTRACT_CONFIG()
+    ).opSepoliaEndpoint],
+    log: true,
+  });
+
+  console.log(`Deployed LayerZero Bridge at ${lz_bridge.address}`);
+
 
   const factory = await deploy('IdFactory', {
     from: deployerWallet,
@@ -113,6 +125,8 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
     await CONTRACT_CONFIG()
   ).ccipChainSelectorAMOY, BRIDGE_CONTRACT_AMOY_address, GATEWAY_AMOY_address);
 
+  await instance_factory.setLzBridge(lz_bridge.address);
+
   const instance_bridge = await ethers.getContractAt(
     'CrossChainBridge',
     bridge.address,
@@ -124,9 +138,27 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 
   console.log('-> Step : Bridge OP_SEPOLIA: Fund bridge');
 
+  const instance_lzbridge = await ethers.getContractAt(
+    'LayerZeroBridge',
+    lz_bridge.address,
+    deployerSigner,
+  );
+
+
+  await instance_lzbridge.setAllowedContract(factory.address, true);
+  await instance_lzbridge.setFactoryAddress(factory.address);
+  const contractConfig = await CONTRACT_CONFIG();
+  await instance_lzbridge.setPeer(contractConfig.solanaEID, contractConfig.solanaFormattedAddress);
+
 
   await deployerSigner.sendTransaction({
     to: bridge.address,
+    value: ethers.parseEther('0.1'),
+  })
+
+
+  await deployerSigner.sendTransaction({
+    to: lz_bridge.address,
     value: ethers.parseEther('0.1'),
   })
 
@@ -279,6 +311,12 @@ async function CONTRACT_CONFIG() {
   const ccipRouterAddressAMOY = `0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2`;
   const ccipChainSelectorAMOY = 16281711391670634445n;
 
+  const opSepoliaEndpoint = `0x6EDCE65403992e310A62460808c4b910D972f10f`;
+  const solanaAddressBase58 = "EjTQazH7zvwvBFDkbJRnpvQfjuQBqjHTdbYE25iaxZoJ";
+  const decodedAddress = bs58.decode(solanaAddressBase58);
+  const solanaFormattedAddress = ethers.hexlify(decodedAddress);
+
+  const solanaEID = 40168;
 
   // const ccipRouterAddressArbSepolia = `0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165`;
   // const ccipRouterAddressBase = `0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93`;
@@ -295,6 +333,7 @@ async function CONTRACT_CONFIG() {
 
   // Return the constants and factories
   return {
+    opSepoliaEndpoint,
     ccipRouterAddressOP_SEPOLIA,
     ccipRouterAddressAMOY,
     ccipChainSelectorAMOY,
@@ -303,6 +342,8 @@ async function CONTRACT_CONFIG() {
     IdFactory_Factory,
     Identity_Factory,
     Gateway_Factory,
+    solanaFormattedAddress,
+    solanaEID,
   };
 }
  

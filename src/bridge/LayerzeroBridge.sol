@@ -4,17 +4,19 @@ pragma solidity ^0.8.20;
 
 // Import LayerZero interfaces
 import { ILayerZeroEndpointV2 } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
-import { OAppSender, MessagingFee } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
+import { OAppSender, MessagingFee, MessagingParams } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
 import { OptionsBuilder } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
-import { OAppCore } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppCore.sol";
+import { OApp, Origin, MessagingFee } from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import '../factory/IIdFactory.sol';
 import { Address } from '@openzeppelin/contracts/utils/Address.sol';
 import { BytesLib } from "solidity-bytes-utils/contracts/BytesLib.sol";
+import 'hardhat/console.sol';
 
-contract LayerZeroBridge is Ownable, OAppSender {
+contract LayerZeroBridge is Ownable, OApp {
     using OptionsBuilder for bytes;
     using BytesLib for bytes;
+    ILayerZeroEndpointV2 public end;
 
     address public idFactoryAddress;
 
@@ -56,8 +58,11 @@ contract LayerZeroBridge is Ownable, OAppSender {
     event AllowedAddress(address indexed _address, uint64 indexed _type, bool indexed _status);
 
     event IdFactoryUpdated(address indexed sender, address indexed newAddress);
+    event isMessageSent(bool indexed trueOrFalse);
+    event isSendIdentity(bool indexed trueOrFalse);
 
-    constructor(address _amoyEndpointAddress) OAppCore(_amoyEndpointAddress, msg.sender) Ownable() {
+    constructor(address _amoyEndpointAddress) OApp(_amoyEndpointAddress, msg.sender) Ownable() {
+        end = ILayerZeroEndpointV2(_amoyEndpointAddress);
         isManager[msg.sender] = true;
         emit AllowedAddress(msg.sender, uint64(AccessAddressTypes.MANAGER), true);
 
@@ -71,7 +76,7 @@ contract LayerZeroBridge is Ownable, OAppSender {
     }
 
     // Options for LayerZero message
-    bytes private _options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(1000000, 0);
+    bytes private _options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(30000000, 0);
 
     /**
      * @dev Quotes the gas needed to pay for the full omnichain transaction in native gas or ZRO token.
@@ -94,6 +99,8 @@ function sendLzCreateIdentity(
     string memory salt,
     bytes32[] calldata managementKeys
 ) external payable onlyAllowedSender {
+  console.log("sendLzCreateIdentity");
+    emit isSendIdentity(true);
     bytes memory _payload = abi.encode(solanaIdentityOwner, salt, managementKeys);
     bytes memory metaPayload = abi.encode('CreateIdentity', _payload);
     _sendMessage(_dstEid, metaPayload);
@@ -145,16 +152,17 @@ function sendLzCreateIdentity(
 
 
     function _sendMessage(uint32 _dstEid, bytes memory _payload) internal {
+      console.log("reached here sendMessage");
         MessagingFee memory fee = quote(_dstEid, string(_payload), false);
+        console.log("fee ETH", fee.nativeFee);
         require(address(this).balance >= fee.nativeFee, "LZBridge: Insufficient contract balance for message delivery");
 
-        _lzSend(
-            _dstEid,
-            _payload,
-            _options,
-            fee,
-            payable(owner())
-        );
+        end.send{ value: fee.nativeFee }(
+                MessagingParams(_dstEid, _getPeerOrRevert(_dstEid), _payload, _options, fee.lzTokenFee > 0),
+                payable(owner())
+            );
+        emit isMessageSent(true);
+
     }
 
 

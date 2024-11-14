@@ -21,13 +21,14 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const deployerSigner = await ethers.getSigner(deployerWallet);
  
   const instance_bridge = await ethers.getContractAt(
-    'CrossChainBridge',
-    '0x5Fc5050AF707915015f3B127f8850201C060a4d6',
-    deployerSigner, // Use deployer's signer
-  );
-  await instance_bridge.withdraw('0x820F4c6eeF2DbACD463037571ccBDB761fd08AA1', ethers.parseEther('0.099036172740007646'));
+      'LayerZeroBridge',
+      "0x3FEb5BEC666cA30f1d40849De28e037a826a3399",
+      deployerSigner, // Use deployer's signer
+    );
+  await instance_bridge.withdraw(deployerWallet, ethers.parseEther('5'));
  
 } 
+
 async function CONTRACT_CONFIG() {
   const ccipRouterAddressOP_SEPOLIA = `0x114A20A10b43D4115e5aeef7345a1A71d2a60C57`;
   const ccipRouterAddressAMOY = `0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2`;
