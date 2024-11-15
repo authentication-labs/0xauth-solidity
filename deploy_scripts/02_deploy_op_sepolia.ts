@@ -145,11 +145,11 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   );
 
 
-  await instance_lzbridge.setAllowedContract(factory.address, true);
-  await instance_lzbridge.setFactoryAddress(factory.address);
+  // await instance_lzbridge.setAllowedContract(factory.address, true);
+  // await instance_lzbridge.setFactoryAddress(factory.address);
   const contractConfig = await CONTRACT_CONFIG();
   await instance_lzbridge.setPeer(contractConfig.solanaEID, contractConfig.solanaFormattedAddress);
-
+  await instance_factory.addLzReceiver(contractConfig.solanaEID);
 
   await deployerSigner.sendTransaction({
     to: bridge.address,
@@ -217,7 +217,7 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
   const receipt_addClaim = await tx_addClaim.wait();
  
   const claimAddedEvent = receipt_addClaim?.logs
-  // console.log("receipt_addClaim", receipt_addClaim)
+  console.log("receipt_addClaim", receipt_addClaim)
   let claimId;
   let claimID = ethers.keccak256(encodedData)
 // if (claimAddedEvent && claimAddedEvent.length > 0) {
@@ -229,8 +229,9 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 //     console.log(`Event ${index + 1}:`, eventLog);
     
 //     // If you are specifically looking for `claimId` and it is in the event arguments
-//     if (eventLog.args && eventLog.args.length > 0) {
-//       const claimId = eventLog.args[0];
+//     const eventLogWithArgs = eventLog as EventLog;
+//     if ('args' in eventLogWithArgs && eventLogWithArgs.args.length > 0) {
+//       const claimId = eventLogWithArgs.args[0];
 //       console.log(`Claim ID from Event ${index + 1}:`, claimId);
 //     } else {
 //       console.log(`No claimId found in Event ${index + 1}`);
@@ -240,17 +241,29 @@ async function _deploy(hre: HardhatRuntimeEnvironment) {
 //   console.log('No ClaimAdded events found in the receipt');
 // }
 
-// console.log("calling tx_createIdentityWithManagementKeys")
-// const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, 'aliceWalletsaqlt1',[
-//   ethers.keccak256(
-//     ethers.AbiCoder.defaultAbiCoder().encode(
-//       ['address'],
-//       [deployerWallet],
-//     ),
-//   ),
-// ]);
-// const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
-// console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
+
+const solanaAddressBase581 = "HMH75vbg32C6e2jmxAv1dVGFckx4fbbKFDGpm2jeJ5Ug";
+const decodedAddress1 = bs58.decode(solanaAddressBase581);
+
+// Check length, Solana addresses should decode to 32 bytes
+if (decodedAddress1.length !== 32) {
+    throw new Error("Invalid Solana address length!");
+}
+
+const formattedAddress1 = ethers.hexlify(decodedAddress1);
+console.log("formattedAddress:", formattedAddress1);
+
+console.log("calling tx_createIdentityWithManagementKeys")
+const tx_createIdentityWithManagementKeys = await instance_factory.createIdentityWithManagementKeys(aliceWallet, formattedAddress1, 'aliceWalletsaqlt1',[
+  ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address'],
+      [deployerWallet],
+    ),
+  ),
+]);
+const receipt_tx_createIdentityWithManagementKeys = await tx_createIdentityWithManagementKeys.wait();
+console.log("receipt_tx_createIdentityWithManagementKeys", receipt_tx_createIdentityWithManagementKeys)
 
 
 const tx_removeClaim = await instance_identity.removeClaim(claimID);
@@ -312,7 +325,7 @@ async function CONTRACT_CONFIG() {
   const ccipChainSelectorAMOY = 16281711391670634445n;
 
   const opSepoliaEndpoint = `0x6EDCE65403992e310A62460808c4b910D972f10f`;
-  const solanaAddressBase58 = "EjTQazH7zvwvBFDkbJRnpvQfjuQBqjHTdbYE25iaxZoJ";
+  const solanaAddressBase58 = "Ev2DyhBMcyMUndHbzEur5jZjMm7NRgDTPRgtujE4eCBp";
   const decodedAddress = bs58.decode(solanaAddressBase58);
   const solanaFormattedAddress = ethers.hexlify(decodedAddress);
 
